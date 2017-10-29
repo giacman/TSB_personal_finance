@@ -52,6 +52,12 @@ m2 <- total_movements %>%
   mutate(Debit.Amount = Debit.Amount/3) %>% 
   mutate(Transaction.Date = '10/05/2017')
 
+total_movements <- total_movements %>%
+  mutate(Debit.Amount = ifelse(Transaction.Type == 'FPO' & Transaction.Date == '10/07/2017',
+                      Debit.Amount/3,
+                      Debit.Amount)
+  )
+
 total_movements <- rbind(total_movements,m1,m2)
 
 # Cleaning workspace
@@ -86,10 +92,6 @@ monthly_expenses <- total_movements %>%
 mean_monthly_expenses = mean(monthly_expenses$monthly_expense)
 mean_monthly_expenses
 
-# Finally, how much are we saving on average per month?
-savings = mean_monthly_revenues - mean_monthly_expenses
-savings
-
 # Plot monthly revenues vs monthly expenses
 ggplot()+
   geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
@@ -97,7 +99,28 @@ ggplot()+
   geom_point(data = monthly_expenses, aes(x = month, y = monthly_expense))+
   geom_line(data = monthly_expenses, aes(x = month, y = monthly_expense, group = 1), colour = 'red')
 
+
 # Net Income
+monthly_net_income <- total_movements %>%
+  select(Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
+  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m")) %>%
+  mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
+  mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
+  filter(Transaction.Type != 'TFR')%>%
+  group_by(month) %>%
+  summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))%>%
+  filter(month != max(month) & month != min(month))
+
+# Finally, how much are we saving on average per month?
+mean_monthly_savings = mean_monthly_revenues - mean_monthly_expenses
+mean_monthly_savings
+
+
+# Plot Net Income
+ggplot()+
+  geom_point(data = monthly_net_income, aes(x = month, y = monthly_net_income))+
+  geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
+  geom_hline(yintercept=0, colour = 'red')
 
 
 # 2) Budget Analysis. Compare typical month expenses and google spreadsheet budget ----
