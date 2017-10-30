@@ -125,24 +125,27 @@ ggplot()+
 
 # 2) Budget Analysis. Compare typical month expenses and google spreadsheet budget ----
 
-# taking July 2017 as representative month
-july_expenses <- total_movements %>%
+# taking month August 2017 as representative month
+
+test_month = '2017-08'
+
+month_expenses <- total_movements %>%
   select(Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
   mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m")) %>%
   na.omit() %>%
   filter(Transaction.Type != 'TFR')%>%
-  filter(month == '2017-07')
+  filter(month == test_month)
 
 # Shelter (Rent, Mortgage, Council Tax, agency fees)
-shelter_expenses <- july_expenses %>%
+shelter_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('CENTRAL|HOUSEKEEP',Transaction.Description))
+  filter(grepl('CENTRAL|HOUSEKEEP|ANUTA DUNCA|L B WALTHAM FOREST 48507504N',Transaction.Description))
 
 shelter <- shelter_expenses %>%
   summarise(total = sum(Debit.Amount)) 
 
 # Giving (Charities and Donations)
-giving_expenses <- july_expenses %>%
+giving_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('HELPINGRHI|WIKIMEDIAF|UNHCR',Transaction.Description))
 
@@ -150,7 +153,7 @@ giving <- giving_expenses %>%
   summarise(total = sum(Debit.Amount))
 
 # Utilites
-utilities_expenses <- july_expenses %>%
+utilities_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('BRGAS|VIRGIN',Transaction.Description))
 
@@ -158,7 +161,7 @@ utilities <- utilities_expenses %>%
   summarise(total = sum(Debit.Amount))
 
 # Learning, personal growth
-learning_expenses <- july_expenses %>%
+learning_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('GITHUB|COURSERAIN|LINKEDIN',Transaction.Description))
 
@@ -166,15 +169,15 @@ learning <- learning_expenses %>%
   summarise(total = sum(Debit.Amount))
 
 # Media Subscriptions
-media_expenses <- july_expenses %>%
+media_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('NETFLIX|Spotify|Prime|SONY',Transaction.Description))
+  filter(grepl('NETFLIX|Spotify|Prime|SONY|ITUNES.COM/BILL',Transaction.Description))
 
 media <- media_expenses %>%
   summarise(total = sum(Debit.Amount))
 
 # Transaportation (Commute + Taxis and extra journeys)
-transport_expenses <- july_expenses %>%
+transport_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('TFL|UBER',Transaction.Description))
 
@@ -182,7 +185,7 @@ transport <- transport_expenses %>%
   summarise(total = sum(Debit.Amount))
 
 # Grocery
-grocery_expenses <- july_expenses %>%
+grocery_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('Co-op|SUPERMARKET|OCADORETAI|SAINSBURYS',Transaction.Description))
 
@@ -190,19 +193,25 @@ grocery <- grocery_expenses %>%
   summarise(total = sum(Debit.Amount))
 
 # Work Lunch
-work_lunch_expenses <- july_expenses %>%
+work_lunch_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA',Transaction.Description))
+  filter(grepl('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|RIVER VIEW RESTAUR',Transaction.Description))
 
 work_lunch <- work_lunch_expenses %>%
   summarise(total = sum(Debit.Amount)) 
 
-# Medical
+# Travel
+travel_expenses <- month_expenses %>%
+  mutate(Transaction.Description = as.character(Transaction.Description))%>%
+  filter(grepl('GIANNELLIF|RYANAIR|EASYJET|CARHIRE|TRENITALIA',Transaction.Description))
 
-# Insurance
+travel <- travel_expenses %>%
+  summarise(total = sum(Debit.Amount)) 
+
+
 
 # Uncathegorised / extra expenses 
-extra_expenses <- july_expenses %>%
+extra_expenses <- month_expenses %>%
   anti_join(shelter_expenses) %>%
   anti_join(giving_expenses) %>%
   anti_join(utilities_expenses) %>%
@@ -210,7 +219,8 @@ extra_expenses <- july_expenses %>%
   anti_join(media_expenses) %>%
   anti_join(transport_expenses) %>%
   anti_join(grocery_expenses) %>%
-  anti_join(work_lunch_expenses)
+  anti_join(work_lunch_expenses) %>%
+  anti_join(travel_expenses)
 
 extra <- extra_expenses %>%
   summarise(total = sum(Debit.Amount))
@@ -226,18 +236,19 @@ shelter
 grocery
 work_lunch
 extra
+travel
 
 ## break down income work, income other / rent, other expenses
-july_income <- total_movements %>%
+month_income <- total_movements %>%
   select(Transaction.Date, Credit.Amount,Transaction.Type, Transaction.Description ) %>%
   mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m")) %>%
   na.omit() %>%
   filter(Transaction.Type != 'TFR')%>%
-  filter(month == '2017-07')
+  filter(month == test_month)
 
 
-# Work Lunch
-work_income <- july_income %>%
+# Work Income
+work_income <- month_income %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('FLUBIT LIMITED',Transaction.Description))
 
@@ -246,19 +257,22 @@ work <- work_income %>%
 
 work
 
-extra_income <- july_income %>%
+extra_income <- month_income %>%
   anti_join(work_income) %>%
   summarise(total = sum(Credit.Amount))
 
 extra_income
 
 ## Net income, i.e. Profit (Loss)
-net_income = sum(july_income$Credit.Amount) - sum(july_expenses$Debit.Amount)
-
+net_income = sum(month_income$Credit.Amount) - sum(month_expenses$Debit.Amount)
 net_income
+
+
+## We should see these expnses for every month, and plot themover time 
 
 ## Capital growth and Targets
 #capital = # get your savings here
 
 #target = # whats your target
+
 
