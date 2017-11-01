@@ -1,4 +1,6 @@
 # Personal Finance Tool
-R script to visualise and monitor personal finances (manually) downloading statemens from TSB accounts.
+R script to visualise and monitor personal finances from TSB account statements.
 
-It requires to manually enter path of the folder where statements are downloaded.
+For each account statements have to be manually downloaded as csv files into a /statements/account_name folder. This folder has to be placed under repo directory.
+
+R-Studio is required to run this script.

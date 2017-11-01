@@ -3,12 +3,12 @@ library(zoo)
 library(dplyr)
 library(lubridate)
 
-
-# Data Preparation ----
-path <- "/Users/giacomovannucchi/Projects/TSB_personal_finance/"
+# Loading csv file statements 
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+path <- getwd()
 
 # classic account
-path_classic = paste0(path,"statements/tsb_classic_enhance/")
+path_classic = paste0(path,"/statements/tsb_classic_enhance/")
 
 temp_classic = list.files(path = path_classic, pattern="*.csv")
 
@@ -24,7 +24,7 @@ classic_enhance = do.call(rbind, classic_enhance_list)
 rm(classic_enhance_list)
 
 # classic plus
-path_plus = paste0(path,"statements/tsb_classic_plus/")
+path_plus = paste0(path,"/statements/tsb_classic_plus/")
 
 temp_plus = list.files(path = path_plus, pattern="*.csv")
 
