@@ -162,7 +162,7 @@ utilities_expenses <- month_expenses %>%
 # Learning, personal growth
 learning_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('GITHUB|COURSERAIN|LINKEDIN|PAYPAL *LCODETHW',Transaction.Description))
+  filter(grepl('GITHUB|COURSERAIN|LINKEDIN|LCODETHW',Transaction.Description))
 
 # Media Subscriptions
 media_expenses <- month_expenses %>%
@@ -182,13 +182,28 @@ grocery_expenses <- month_expenses %>%
 # Work Lunch
 work_lunch_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|
-               RIVER VIEW RESTAUR|PROSPECT OF WHITBY',Transaction.Description))
+  filter(grepl('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|RIVER VIEW RESTAUR|PROSPECT OF WHITBY',
+               Transaction.Description))
 
-# Travel
+# Travel expenses
 travel_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('GIANNELLIF|RYANAIR|EASYJET|CARHIRE|TRENITALIA',Transaction.Description))
+  filter(grepl('GIANNELLIF|VISAXR|RIALTO',Transaction.Description))
+
+# Travel tickets
+travel_tickets <- month_expenses %>%
+  mutate(Transaction.Description = as.character(Transaction.Description))%>%
+  filter(grepl('RYANAIR|EASYJET|CARHIRE|TRENITALIA',Transaction.Description))
+
+# Eating out
+eating_out <- month_expenses %>%
+  mutate(Transaction.Description = as.character(Transaction.Description))%>%
+  filter(grepl('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17',Transaction.Description))
+
+# Fashion
+fashion <- month_expenses %>%
+  mutate(Transaction.Description = as.character(Transaction.Description))%>%
+  filter(grepl('COS|LEVI STRAUSS',Transaction.Description))
 
 # Uncathegorised / extra expenses 
 extra_expenses <- month_expenses %>%
@@ -200,18 +215,21 @@ extra_expenses <- month_expenses %>%
   anti_join(transport_expenses) %>%
   anti_join(grocery_expenses) %>%
   anti_join(work_lunch_expenses) %>%
+  anti_join(travel_tickets) %>%
+  anti_join(eating_out) %>%
+  anti_join(fashion) %>%
   anti_join(travel_expenses)
 
 # Expenses Details and Totals:
 expense_voices <- list(shelter_expenses, transport_expenses, media_expenses,
                        learning_expenses, utilities_expenses, giving_expenses,
                        shelter_expenses, grocery_expenses, work_lunch_expenses,
-                       travel_expenses, extra_expenses)
+                       travel_tickets,travel_expenses, eating_out, fashion, extra_expenses)
 
 expense_voices_names <- list('shelter_expenses', 'transport_expenses', 'media_expenses',
                             'learning_expenses', 'utilities_expenses', 'giving_expenses',
                             'shelter_expenses', 'grocery_expenses', 'work_lunch_expenses',
-                            'travel_expenses', 'extra_expenses')
+                            'travel_tickets','travel_expenses', 'eating_out', 'fashion','extra_expenses')
 
 names(expense_voices) <- expense_voices_names
 
