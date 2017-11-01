@@ -73,11 +73,6 @@ total_movements <- total_movements %>%
 # Excluding movements between accounts
 total_movements <- total_movements[!grepl('G VANNUCCHI',total_movements$Transaction.Description),]
 
-# ### this is the initial amount transfered at beginning of period of analysis
-# initial_amount <-sum(total_movements[grepl('G VANNUCCHI',total_movements$Transaction.Description),]$Credit.Amount, na.rm = TRUE) -
-#   sum(total_movements[grepl('G VANNUCCHI',total_movements$Transaction.Description),]$Debit.Amount, na.rm = TRUE)
-# initial_row <- total_movements[grepl('G VANNUCCHI',total_movements$Transaction.Description),][1,]
-
 # Cleaning workspace
 library(gdata)
 keep(total_movements, sure = TRUE)
@@ -142,9 +137,9 @@ ggplot()+
 
 test_month = '2017-10'
 
+# EXPENSES:
 month_expenses <- total_movements %>%
-  select(Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
-  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m")) %>%
+  select(month, Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
   na.omit() %>%
   filter(Transaction.Type != 'TFR')%>%
   filter(month == test_month)
@@ -159,63 +154,41 @@ giving_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('HELPINGRHI|WIKIMEDIAF|UNHCR',Transaction.Description))
 
-giving <- giving_expenses %>%
-  summarise(total = sum(Debit.Amount))
-
 # Utilites
 utilities_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('BRGAS|VIRGIN',Transaction.Description))
 
-utilities <- utilities_expenses %>%
-  summarise(total = sum(Debit.Amount))
-
 # Learning, personal growth
 learning_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('GITHUB|COURSERAIN|LINKEDIN',Transaction.Description))
-
-learning <- learning_expenses %>%
-  summarise(total = sum(Debit.Amount))
+  filter(grepl('GITHUB|COURSERAIN|LINKEDIN|PAYPAL *LCODETHW',Transaction.Description))
 
 # Media Subscriptions
 media_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('NETFLIX|Spotify|Prime|SONY|ITUNES.COM/BILL',Transaction.Description))
 
-media <- media_expenses %>%
-  summarise(total = sum(Debit.Amount))
-
 # Transaportation (Commute + Taxis and extra journeys)
 transport_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('TFL|UBER',Transaction.Description))
+  filter(grepl('TFL.GOV.UK|UBER',Transaction.Description))
 
 # Grocery
 grocery_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('Co-op|SUPERMARKET|OCADORETAI|SAINSBURYS',Transaction.Description))
 
-grocery <- grocery_expenses %>%
-  summarise(total = sum(Debit.Amount))
-
 # Work Lunch
 work_lunch_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
-  filter(grepl('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|RIVER VIEW RESTAUR',Transaction.Description))
-
-work_lunch <- work_lunch_expenses %>%
-  summarise(total = sum(Debit.Amount)) 
+  filter(grepl('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|
+               RIVER VIEW RESTAUR|PROSPECT OF WHITBY',Transaction.Description))
 
 # Travel
 travel_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('GIANNELLIF|RYANAIR|EASYJET|CARHIRE|TRENITALIA',Transaction.Description))
-
-travel <- travel_expenses %>%
-  summarise(total = sum(Debit.Amount)) 
-
-
 
 # Uncathegorised / extra expenses 
 extra_expenses <- month_expenses %>%
@@ -229,39 +202,59 @@ extra_expenses <- month_expenses %>%
   anti_join(work_lunch_expenses) %>%
   anti_join(travel_expenses)
 
-extra <- extra_expenses %>%
-  summarise(total = sum(Debit.Amount))
+# Expenses Details and Totals:
+expense_voices <- list(shelter_expenses, transport_expenses, media_expenses,
+                       learning_expenses, utilities_expenses, giving_expenses,
+                       shelter_expenses, grocery_expenses, work_lunch_expenses,
+                       travel_expenses, extra_expenses)
 
-# Budget expenditure items:
+expense_voices_names <- list('shelter_expenses', 'transport_expenses', 'media_expenses',
+                            'learning_expenses', 'utilities_expenses', 'giving_expenses',
+                            'shelter_expenses', 'grocery_expenses', 'work_lunch_expenses',
+                            'travel_expenses', 'extra_expenses')
 
-transport_detail <- transport_expenses %>% 
-  group_by(Transaction.Description) %>% 
-  summarise(n = sum(Debit.Amount))
+names(expense_voices) <- expense_voices_names
 
-transport_total <- transport_expenses %>%
-  summarise(total = sum(Debit.Amount))
+# Detail Function
+calc_detail <- function(dt, type){
+  if (type == 'expences'){
+    detail <- dt %>%
+      group_by(Transaction.Description) %>% 
+      summarise(n = sum(Debit.Amount))
+    return(detail)
+  } else {
+    detail <- dt %>%
+      group_by(Transaction.Description) %>% 
+      summarise(n = sum(Credit.Amount))
+    return(detail)
+  }
+}
+# Detail Total
+calc_total <- function(dt, type){
+  if (type == 'expences'){
+    total <- dt %>%
+      summarise(total = sum(Debit.Amount))
+  return(total)
+  } else {
+    total <- dt %>%
+      summarise(total = sum(Credit.Amount))
+    return(total)
+  }
+}
 
-transport_detail
-transport_total
+expences_detail <- lapply(expense_voices, type = 'expences', calc_detail)
+expences_total <- lapply(expense_voices, type = 'expences', calc_total)
 
-media
-learning
-utilities
-giving
-shelter
+for (voice in expense_voices_names) {
+  print('############################')
+  print(voice)
+  print(expences_detail[[voice]])
+  print(expences_total[[voice]])
+}
 
-shelter <- shelter_expenses %>%
-  summarise(total = sum(Debit.Amount)) 
-
-grocery
-work_lunch
-extra
-travel
-
-## break down income work, income other / rent, other expenses
+# INCOME:
 month_income <- total_movements %>%
-  select(Transaction.Date, Credit.Amount,Transaction.Type, Transaction.Description ) %>%
-  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m")) %>%
+  select(month, Transaction.Date, Credit.Amount,Transaction.Type, Transaction.Description ) %>%
   na.omit() %>%
   filter(Transaction.Type != 'TFR')%>%
   filter(month == test_month)
@@ -272,27 +265,34 @@ work_income <- month_income %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('FLUBIT LIMITED',Transaction.Description))
 
-work <- work_income %>%
-  summarise(total = sum(Credit.Amount))
-
-work
-
+# Extra Income
 extra_income <- month_income %>%
-  anti_join(work_income) %>%
-  summarise(total = sum(Credit.Amount))
+  anti_join(work_income)
 
-extra_income
+# Expenses Details and Totals:
+income_voices <- list(work_income, extra_income)
 
-## Net income, i.e. Profit (Loss)
-net_income = sum(month_income$Credit.Amount) - sum(month_expenses$Debit.Amount)
-net_income
+income_voices_names <- list('work_income', 'extra_income')
+names(income_voices) <- income_voices_names
 
+
+income_detail <- lapply(income_voices, type = 'income', calc_detail)
+income_total <- lapply(income_voices, type = 'income', calc_total)
+
+for (voice in income_voices_names) {
+  print('############################')
+  print(voice)
+  print(as.data.frame(income_detail[[voice]]))
+  print(income_total[[voice]])
+}
 
 ## We should see these expnses for every month, and plot themover time 
 
-## Capital growth and Targets
-#capital = # get your savings here
+## Savings and Targets
 
-#target = # whats your target
+# Savings = # get your savings here
 
+# Target = # whats your target
+
+# Time Estimste to achieve target
 
