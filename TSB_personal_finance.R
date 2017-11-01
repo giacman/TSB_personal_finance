@@ -3,7 +3,7 @@ library(zoo)
 library(dplyr)
 library(lubridate)
 
-# Loading csv file statements 
+# Loading csv file statements ----
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 path <- getwd()
 
@@ -60,36 +60,52 @@ total_movements <- total_movements %>%
 
 total_movements <- rbind(total_movements,m1,m2)
 
+# adding month variable
+total_movements <- total_movements %>%
+  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m"))
+
+# Removing first and last month to avoid incomplete data on months
+current_month <- format(parse_date_time(Sys.Date(), "ymd"), "%Y-%m")
+
+total_movements <- total_movements %>%
+  filter(month != current_month & month != min(month))
+
+# Excluding movements between accounts
+total_movements <- total_movements[!grepl('G VANNUCCHI',total_movements$Transaction.Description),]
+
+# ### this is the initial amount transfered at beginning of period of analysis
+# initial_amount <-sum(total_movements[grepl('G VANNUCCHI',total_movements$Transaction.Description),]$Credit.Amount, na.rm = TRUE) -
+#   sum(total_movements[grepl('G VANNUCCHI',total_movements$Transaction.Description),]$Debit.Amount, na.rm = TRUE)
+# initial_row <- total_movements[grepl('G VANNUCCHI',total_movements$Transaction.Description),][1,]
+
 # Cleaning workspace
 library(gdata)
 keep(total_movements, sure = TRUE)
 
-# 1) Analysis monthly average expenses and revenues ----
+# 1) Monthly Average expenses and revenues ----
 
-# Monthly Average Revenues (Removing first and last month to clean up data)
+# Monthly Average Revenues
 monthly_revenues <- total_movements %>%
-  select(Transaction.Date, Credit.Amount,Transaction.Type, Transaction.Description ) %>%
-  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m")) %>%
+  select(month, Transaction.Date, Credit.Amount,Transaction.Type, Transaction.Description ) %>%
   na.omit() %>%
   filter(Transaction.Type != 'TFR')%>%
   group_by(month) %>%
-  summarise(monthly_revenues = sum(Credit.Amount))%>%
-  filter(month != max(month) & month != min(month))
+  summarise(monthly_revenues = sum(Credit.Amount))
 
 mean_monthly_revenues = mean(monthly_revenues$monthly_revenues)
+monthly_revenues
 mean_monthly_revenues
 
-# Monthly Average Expenses (Removing first and last month to clean up data)
+# Monthly Average Expenses 
 monthly_expenses <- total_movements %>%
-  select(Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
-  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m")) %>%
+  select(month, Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
   na.omit() %>%
   filter(Transaction.Type != 'TFR')%>%
   group_by(month) %>%
-  summarise(monthly_expense = sum(Debit.Amount))%>%
-  filter(month != max(month) & month != min(month))
+  summarise(monthly_expense = sum(Debit.Amount))
 
 mean_monthly_expenses = mean(monthly_expenses$monthly_expense)
+monthly_expenses
 mean_monthly_expenses
 
 # Plot monthly revenues vs monthly expenses
@@ -102,19 +118,16 @@ ggplot()+
 
 # Net Income
 monthly_net_income <- total_movements %>%
-  select(Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
-  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m")) %>%
+  select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
   mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
   mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
   filter(Transaction.Type != 'TFR')%>%
   group_by(month) %>%
-  summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))%>%
-  filter(month != max(month) & month != min(month))
+  summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))
 
 # Finally, how much are we saving on average per month?
-mean_monthly_savings = mean_monthly_revenues - mean_monthly_expenses
-mean_monthly_savings
-
+monthly_net_income
+mean_monthly_net_income = mean(monthly_net_income$monthly_net_income)
 
 # Plot Net Income
 ggplot()+
@@ -123,11 +136,11 @@ ggplot()+
   geom_hline(yintercept=0, colour = 'red')
 
 
-# 2) Budget Analysis. Compare typical month expenses and google spreadsheet budget ----
+# 2) Select Month Detailed Analysis ----
 
 # taking month August 2017 as representative month
 
-test_month = '2017-08'
+test_month = '2017-10'
 
 month_expenses <- total_movements %>%
   select(Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
@@ -140,9 +153,6 @@ month_expenses <- total_movements %>%
 shelter_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('CENTRAL|HOUSEKEEP|ANUTA DUNCA|L B WALTHAM FOREST 48507504N',Transaction.Description))
-
-shelter <- shelter_expenses %>%
-  summarise(total = sum(Debit.Amount)) 
 
 # Giving (Charities and Donations)
 giving_expenses <- month_expenses %>%
@@ -180,9 +190,6 @@ media <- media_expenses %>%
 transport_expenses <- month_expenses %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('TFL|UBER',Transaction.Description))
-
-transport <- transport_expenses %>%
-  summarise(total = sum(Debit.Amount))
 
 # Grocery
 grocery_expenses <- month_expenses %>%
@@ -227,12 +234,25 @@ extra <- extra_expenses %>%
 
 # Budget expenditure items:
 
-transport
+transport_detail <- transport_expenses %>% 
+  group_by(Transaction.Description) %>% 
+  summarise(n = sum(Debit.Amount))
+
+transport_total <- transport_expenses %>%
+  summarise(total = sum(Debit.Amount))
+
+transport_detail
+transport_total
+
 media
 learning
 utilities
 giving
 shelter
+
+shelter <- shelter_expenses %>%
+  summarise(total = sum(Debit.Amount)) 
+
 grocery
 work_lunch
 extra
