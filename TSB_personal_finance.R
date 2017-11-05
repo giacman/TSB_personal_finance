@@ -2,6 +2,7 @@ library(ggplot2)
 library(zoo)
 library(dplyr)
 library(lubridate)
+library(rstudioapi)
 
 # Loading csv file statements ----
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -83,7 +84,7 @@ keep(total_movements, sure = TRUE)
 monthly_revenues <- total_movements %>%
   select(month, Transaction.Date, Credit.Amount,Transaction.Type, Transaction.Description ) %>%
   na.omit() %>%
-  filter(Transaction.Type != 'TFR')%>%
+  #filter(Transaction.Type != 'TFR')%>%
   group_by(month) %>%
   summarise(monthly_revenues = sum(Credit.Amount))
 
@@ -95,7 +96,7 @@ mean_monthly_revenues
 monthly_expenses <- total_movements %>%
   select(month, Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
   na.omit() %>%
-  filter(Transaction.Type != 'TFR')%>%
+  #filter(Transaction.Type != 'TFR')%>%
   group_by(month) %>%
   summarise(monthly_expense = sum(Debit.Amount))
 
@@ -116,7 +117,7 @@ monthly_net_income <- total_movements %>%
   select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
   mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
   mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
-  filter(Transaction.Type != 'TFR')%>%
+  #filter(Transaction.Type != 'TFR')%>%
   group_by(month) %>%
   summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))
 
@@ -131,18 +132,20 @@ ggplot()+
   geom_hline(yintercept=0, colour = 'red')
 
 
+### TO DO: the two plots should become one split in two parts.
+
+
 # 2) Select Month Detailed Analysis ----
 
 # taking month August 2017 as representative month
 
-test_month = '2017-10'
+selected_month = '2017-09'
 
 # EXPENSES:
 month_expenses <- total_movements %>%
   select(month, Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
   na.omit() %>%
-  filter(Transaction.Type != 'TFR')%>%
-  filter(month == test_month)
+  filter(month == selected_month)
 
 # Shelter (Rent, Mortgage, Council Tax, agency fees)
 shelter_expenses <- month_expenses %>%
@@ -273,24 +276,34 @@ for (voice in expense_voices_names) {
 # INCOME:
 month_income <- total_movements %>%
   select(month, Transaction.Date, Credit.Amount,Transaction.Type, Transaction.Description ) %>%
-  na.omit() %>%
-  filter(Transaction.Type != 'TFR')%>%
-  filter(month == test_month)
-
+  na.omit()%>%
+  filter(month == selected_month)
 
 # Work Income
 work_income <- month_income %>%
   mutate(Transaction.Description = as.character(Transaction.Description))%>%
   filter(grepl('FLUBIT LIMITED',Transaction.Description))
 
+# Work Income
+interest_income <- month_income %>%
+  mutate(Transaction.Description = as.character(Transaction.Description))%>%
+  filter(grepl('INTEREST',Transaction.Description))
+
+# Family Extra Income
+family_extra_income <- month_income %>%
+  mutate(Transaction.Description = as.character(Transaction.Description))%>%
+  filter(grepl('VANNUCCHI P| CARANDINI S| BATTAGLINI',Transaction.Description))
+
 # Extra Income
 extra_income <- month_income %>%
-  anti_join(work_income)
+  anti_join(work_income) %>%
+  anti_join(interest_income) %>%
+  anti_join(family_extra_income)
 
 # Expenses Details and Totals:
-income_voices <- list(work_income, extra_income)
+income_voices <- list(work_income, interest_income, family_extra_income, extra_income)
 
-income_voices_names <- list('work_income', 'extra_income')
+income_voices_names <- list('work_income',  'interest_income', 'family_extra_income', 'extra_income')
 names(income_voices) <- income_voices_names
 
 
@@ -304,13 +317,53 @@ for (voice in income_voices_names) {
   print(income_total[[voice]])
 }
 
-## We should see these expnses for every month, and plot themover time 
+# 3) Expenses and Revenues with breakdown voices over months 
 
-## Savings and Targets
+# attach a tag to every transaction based on logc above:
+
+total_movements_tagged <- total_movements %>%
+  mutate(transaction_amount = ifelse(!is.na(Debit.Amount), -1 * Debit.Amount,Credit.Amount )) %>%
+  mutate(transaction_type = ifelse(!is.na(Debit.Amount), 'expense','revenue')) %>%
+  mutate(Transaction.Description = as.character(Transaction.Description))%>%
+  mutate(tag = ifelse(grepl('CENTRAL|HOUSEKEEP|ANUTA DUNCA|L B WALTHAM FOREST 48507504N',Transaction.Description) & transaction_type == 'expense', 'shelter',
+                                  ifelse(grepl('HELPINGRHI|WIKIMEDIAF|UNHCR',Transaction.Description) & transaction_type == 'expense', 'giving',
+                                         ifelse(grepl('BRGAS|VIRGIN',Transaction.Description) & transaction_type == 'expense', 'utilities',
+                                                ifelse(grepl('GITHUB|COURSERAIN|LINKEDIN|LCODETHW',Transaction.Description) & transaction_type == 'expense','learning',
+                                                       ifelse(grepl('NETFLIX|Spotify|Prime|SONY|ITUNES.COM/BILL',Transaction.Description) & transaction_type == 'expense', 'media',
+                                                              ifelse(grepl('TFL.GOV.UK|UBER',Transaction.Description) & transaction_type == 'expense','transport',
+                                                                     ifelse(grepl('Co-op|SUPERMARKET|OCADORETAI|SAINSBURYS',Transaction.Description) & transaction_type == 'expense','grocery',
+                                                                            ifelse(grepl('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|RIVER VIEW RESTAUR|PROSPECT OF WHITBY',Transaction.Description) & transaction_type == 'expense', 'work_lumch',
+                                                                                    ifelse(grepl('GIANNELLIF|VISAXR|RIALTO',Transaction.Description) & transaction_type == 'expense','travel_expenses',
+                                                                                           ifelse(grepl('RYANAIR|EASYJET|CARHIRE|TRENITALIA',Transaction.Description) & transaction_type == 'expense', 'travel_tickets',
+                                                                                                  ifelse(grepl('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17',Transaction.Description) & transaction_type == 'expense', 'eating_out',
+                                                                                                         ifelse(grepl('COS|LEVI STRAUSS',Transaction.Description) & transaction_type == 'expense', 'fashion',
+                                                                                                                ifelse(grepl('FLUBIT LIMITED',Transaction.Description) & transaction_type == 'revenue', 'work_income',
+                                                                                                                       ifelse(grepl('INTEREST',Transaction.Description) & transaction_type == 'revenue', 'interests_income',
+                                                                                                                              ifelse(grepl('VANNUCCHI P| CARANDINI S| BATTAGLINI',Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
+                                                                                                                       )
+                                                                                                                )
+                                                                                                         )
+                                                                                                  )
+                                                                                           )
+                                                                                    )
+                                                                            )
+                                                                     )
+                                                              )
+                                                       )
+                                                )
+                                         )
+                                  )
+                      )
+         ) %>%
+  select(Transaction.Date, month, Transaction.Description, tag, transaction_type, transaction_amount)
+
+ggplot(data = total_movements_tagged[total_movements_tagged$transaction_type == 'expense',], 
+       aes(x = month, y = -1 * transaction_amount, fill = tag))+
+  geom_bar(stat = 'identity')
+
+# 4) Savings and Targets
 
 # Savings = # get your savings here
-
 # Target = # whats your target
-
 # Time Estimste to achieve target
 
