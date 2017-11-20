@@ -4,6 +4,7 @@ library(dplyr)
 library(lubridate)
 library(rstudioapi)
 library(gridExtra)
+library(plotly)
 
 # Loading csv file statements ----
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -131,7 +132,7 @@ plot2 <- ggplot()+
 
 grid.arrange(plot1, plot2, ncol=1) 
 
-# 2) Expenses and Revenues with breakdown voices over months 
+# Tab 2) Expenses and Revenues with breakdown voices over months ------
 
 # attach a tag to every transaction based on logic above:
 shelter <- ('CENTRAL|HOUSEKEEP|L B WALTHAM FOREST 48507504N|TIDYCHOICE|M TAYLOR|DEPOSIT PROTECTION|TIDYCHOI')
@@ -145,7 +146,8 @@ grocery <- ('Co-op|SUPERMARKET|OCADORETAI|SAINSBURYS|EKOL')
 work_lunch <- ('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|RIVER VIEW RESTAUR|PROSPECT OF WHITBY|RIVERVIEW SEAFOOD')
 travel_expenses <- ('GIANNELLIF|EUROS|RIALTO')
 travel_tickets <- ('RYANAIR|EASYJET|CARHIRE|TRENITALIA')
-eating_out <- ('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17|FRANCO MANCA|SODO')
+eating_out <- ('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17|FRANCO MANCA|SODO|PIZZA EXPRESS')
+going_out <- ('HACKNEY PICTUREHOU')
 fashion <- ('COS|LEVI STRAUSS|DR MARTENS')
 salary <- ('FLUBIT LIMITED')
 interests_income <- ('INTEREST')
@@ -167,10 +169,11 @@ total_movements_tagged <- total_movements %>%
                                                                                     ifelse(grepl(travel_expenses,Transaction.Description) & transaction_type == 'expense','travel_expenses',
                                                                                            ifelse(grepl(travel_tickets,Transaction.Description) & transaction_type == 'expense', 'travel_tickets',
                                                                                                   ifelse(grepl(eating_out,Transaction.Description) & transaction_type == 'expense', 'eating_out',
-                                                                                                         ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'fashion',
-                                                                                                                ifelse(grepl(salary,Transaction.Description) & transaction_type == 'revenue', 'salary',
-                                                                                                                       ifelse(grepl(interests_income,Transaction.Description) & transaction_type == 'revenue', 'interests_income',
-                                                                                                                              ifelse(grepl(extra_income,Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
+                                                                                                         ifelse(grepl(eating_out,Transaction.Description) & transaction_type == 'expense', 'going_out',
+                                                                                                               ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'fashion',
+                                                                                                                      ifelse(grepl(salary,Transaction.Description) & transaction_type == 'revenue', 'salary',
+                                                                                                                             ifelse(grepl(interests_income,Transaction.Description) & transaction_type == 'revenue', 'interests_income',
+                                                                                                                                    ifelse(grepl(extra_income,Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
                                                                                                                        )
                                                                                                                 )
                                                                                                          )
@@ -186,18 +189,20 @@ total_movements_tagged <- total_movements %>%
                                   )
                              ) 
                       )
-                
+                )
          ) %>%
   select(Transaction.Date, month, Transaction.Description, tag, transaction_type, transaction_amount)
 
-ggplot(data = total_movements_tagged[total_movements_tagged$transaction_type == 'expense',], 
+plot3 <- ggplot(data = total_movements_tagged[total_movements_tagged$transaction_type == 'expense',], 
        aes(x = month, y = -1 * transaction_amount, fill = tag))+
   geom_bar(stat = 'identity')
+
+ggplotly(plot3)
 
 ### TO DO add categories for pubs/cinemas/concerts and also forniture
 View(total_movements_tagged[total_movements_tagged$tag == 'uncategorised',])
 
-# tab 2) Action one: show only one month
+# tab 3) Action one: Single month drill down view 
 
 selected_month = '2017-09'
 
