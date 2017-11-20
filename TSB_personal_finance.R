@@ -130,27 +130,30 @@ plot2 <- ggplot()+
   geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
   geom_hline(yintercept=0, colour = 'red')
 
+ggplotly(plot1)
+ggplotly(plot2)
 grid.arrange(plot1, plot2, ncol=1) 
+
 
 # Tab 2) Expenses and Revenues with breakdown voices over months ------
 
 # attach a tag to every transaction based on logic above:
-shelter <- ('CENTRAL|HOUSEKEEP|L B WALTHAM FOREST 48507504N|TIDYCHOICE|M TAYLOR|DEPOSIT PROTECTION|TIDYCHOI|ARGOS')
+shelter <- ('CENTRAL|HOUSEKEEP|L B WALTHAM FOREST 48507504N|TIDYCHOICE|M TAYLOR|DEPOSIT PROTECTION|TIDYCHOI|ARGOS|MICHAEL TAYLOR MATTRESS|MUJI|MICHAEL TAYLOR WARDROBE')
 nursery <- ('ANUTA DUNCA')
 giving <- ('HELPINGRHI|WIKIMEDIAF|UNHCR|GUIDE DOGS')
 utilities <- ('BRGAS|VIRGIN|THAMES WATER|SKY DIGITAL|BRITISH GAS')
-learning <- ('GITHUB|COURSERAIN|LINKEDIN|LCODETHW|CODESCHOOL.COM|DATAQUEST.IO|CODECADEMY')
-media <- ('NETFLIX|Spotify|Prime|SONY|ITUNES.COM|NEW YORKER|PLAYSTATIO|NYTDIGITALSUBSCRIP')
-transport <- ('TFL.GOV.UK|UBER|Uber BV|LONDON OVERGROUND|ADDISONLEE|TFL CYCLE HIRE')
+learning <- ('GITHUB|COURSERAIN|LINKEDIN|LCODETHW|CODESCHOOL.COM|DATAQUEST.IO|CODECADEMY|UDEMY')
+media <- ('NETFLIX|Spotify|Prime|SONY|ITUNES.COM|NEW YORKER|PLAYSTATIO|NYTDIGITALSUBSCRIP|NEWYORKTIM')
+transport <- ('TFL.GOV.UK|UBER|Uber|LONDON OVERGROUND|ADDISONLEE|TFL CYCLE HIRE|ABOUT THE BIKE')
 grocery <- ('Co-op|SUPERMARKET|OCADORETAI|SAINSBURYS|EKOL')
 work_lunch <- ('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|RIVER VIEW RESTAUR|PROSPECT OF WHITBY|RIVERVIEW SEAFOOD')
-travel_expenses <- ('GIANNELLIF|EUROS|RIALTO')
-travel_tickets <- ('RYANAIR|EASYJET|CARHIRE|TRENITALIA')
-eating_out <- ('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17|FRANCO MANCA|SODO|PIZZA EXPRESS|FRANZE & EVANS|THE ALBION IN GOLD|DELIVEROO.CO.UK')
-going_out <- ('HACKNEY PICTUREHOU|BRITISH FILM INSTI|WWW.GENESISCINEMA|WWW.BARBICAN|OWL AND PUSSYCAT')
-fashion <- ('COS|LEVI STRAUSS|DR MARTENS')
-sport <- ('HARLANDS 2006133A-BODYSTUDI')
-salary <- ('FLUBIT LIMITED')
+travel_expenses <- ('GIANNELLIF|EUROS|RIALTO|GATWICK EXPRSS|FLEXICOVER.CO.UK|GATWICK SOUTH|Europcar.com|NIVI CREDIT')
+travel_tickets <- ('RYANAIR|EASYJET|CARHIRE|TRENITALIA|CITYJET')
+eating_out <- ('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17|FRANCO MANCA|SODO|PIZZA EXPRESS|FRANZ|THE ALBION IN GOLD|DELIVEROO|DELIVEROOCOUK|HARE AND HOUNDS|PADRON|DISHOOM|THE BREAKFAST CLUB|SANTO REMEDIO|BELL BOI|POPPIESFISH|TONKOTSU|IL GUSCIO RESTAURA|MEAT MISSION|KAHAILA|LA BOUCHE|AMICI MIEI|BIRLEYS SANDWICHES|HOMESLICE|RED DOG SALOON|BURRO E SALVIA|OMBRA|BUSABA SHOREDITCH|TAYYABS|PING PONG')
+going_out <- ('PICTUREHOU|BRITISH FILM INSTI|WWW.GENESISCINEMA|WWW.BARBICAN|OWL AND PUSSYCAT|TATE|THE STAR BY HACKN|ALBION|BAR KICK|THE KINGS ARMS|RICH MIX|THE FLORIST ARMS|WATER POET|CARGO|BEST OF THEATRE|MILAGROS|THE TALBOT')
+fashion <- ('COS|LEVI STRAUSS|DR MARTENS|ARMYPANDAG|CALZEDONIA|BARBER & PARLOUR|TAYLOR TAYLOR')
+sport <- ('HARLANDS 2006133A-BODYSTUDI|PLAYFOOTBALL|DECATHLON')
+salary <- ('FLUBIT LIMITED|FLUBIT LTD')
 interests_income <- ('INTEREST')
 extra_income <- ('VANNUCCHI P|CARANDINI S|BATTAGLINI|CIONNINI')
 
@@ -170,9 +173,9 @@ total_movements_tagged <- total_movements %>%
                                                                                     ifelse(grepl(travel_expenses,Transaction.Description) & transaction_type == 'expense','travel_expenses',
                                                                                            ifelse(grepl(travel_tickets,Transaction.Description) & transaction_type == 'expense', 'travel_tickets',
                                                                                                   ifelse(grepl(eating_out,Transaction.Description) & transaction_type == 'expense', 'eating_out',
-                                                                                                         ifelse(grepl(eating_out,Transaction.Description) & transaction_type == 'expense', 'going_out',
+                                                                                                         ifelse(grepl(going_out,Transaction.Description) & transaction_type == 'expense', 'going_out',
                                                                                                                ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'fashion',
-                                                                                                                      ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'sport',
+                                                                                                                      ifelse(grepl(sport,Transaction.Description) & transaction_type == 'expense', 'sport',
                                                                                                                             ifelse(grepl(salary,Transaction.Description) & transaction_type == 'revenue', 'salary',
                                                                                                                                    ifelse(grepl(interests_income,Transaction.Description) & transaction_type == 'revenue', 'interests_income',
                                                                                                                                           ifelse(grepl(extra_income,Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
@@ -202,8 +205,12 @@ plot3 <- ggplot(data = total_movements_tagged[total_movements_tagged$transaction
 
 ggplotly(plot3)
 
-### TO DO add categories for pubs/cinemas/concerts and also forniture
+## ISSUES:
 View(total_movements_tagged[total_movements_tagged$tag == 'uncategorised',])
+
+
+## Both revenues and expenses go up  lot in March 2017 because of deposit moving in andd out
+# note: 26/08/2016 IZ *BELL BOI LTD CD 0111 e'  il Babbo che e' stato a Londra
 
 # tab 3) Action one: Single month drill down view 
 
@@ -215,6 +222,7 @@ selected_month_data <- total_movements_tagged %>%
   summarise(sum = sum(transaction_amount))
 
 ## TO DO: find a way to visualise also the total by transaction type and the detail of each voice
+
 
 #4) Savings and Targets
 
