@@ -135,7 +135,7 @@ grid.arrange(plot1, plot2, ncol=1)
 # Tab 2) Expenses and Revenues with breakdown voices over months ------
 
 # attach a tag to every transaction based on logic above:
-shelter <- ('CENTRAL|HOUSEKEEP|L B WALTHAM FOREST 48507504N|TIDYCHOICE|M TAYLOR|DEPOSIT PROTECTION|TIDYCHOI')
+shelter <- ('CENTRAL|HOUSEKEEP|L B WALTHAM FOREST 48507504N|TIDYCHOICE|M TAYLOR|DEPOSIT PROTECTION|TIDYCHOI|ARGOS')
 nursery <- ('ANUTA DUNCA')
 giving <- ('HELPINGRHI|WIKIMEDIAF|UNHCR|GUIDE DOGS')
 utilities <- ('BRGAS|VIRGIN|THAMES WATER|SKY DIGITAL|BRITISH GAS')
@@ -146,9 +146,10 @@ grocery <- ('Co-op|SUPERMARKET|OCADORETAI|SAINSBURYS|EKOL')
 work_lunch <- ('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|RIVER VIEW RESTAUR|PROSPECT OF WHITBY|RIVERVIEW SEAFOOD')
 travel_expenses <- ('GIANNELLIF|EUROS|RIALTO')
 travel_tickets <- ('RYANAIR|EASYJET|CARHIRE|TRENITALIA')
-eating_out <- ('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17|FRANCO MANCA|SODO|PIZZA EXPRESS')
-going_out <- ('HACKNEY PICTUREHOU')
+eating_out <- ('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17|FRANCO MANCA|SODO|PIZZA EXPRESS|FRANZE & EVANS|THE ALBION IN GOLD|DELIVEROO.CO.UK')
+going_out <- ('HACKNEY PICTUREHOU|BRITISH FILM INSTI|WWW.GENESISCINEMA|WWW.BARBICAN|OWL AND PUSSYCAT')
 fashion <- ('COS|LEVI STRAUSS|DR MARTENS')
+sport <- ('HARLANDS 2006133A-BODYSTUDI')
 salary <- ('FLUBIT LIMITED')
 interests_income <- ('INTEREST')
 extra_income <- ('VANNUCCHI P|CARANDINI S|BATTAGLINI|CIONNINI')
@@ -171,9 +172,10 @@ total_movements_tagged <- total_movements %>%
                                                                                                   ifelse(grepl(eating_out,Transaction.Description) & transaction_type == 'expense', 'eating_out',
                                                                                                          ifelse(grepl(eating_out,Transaction.Description) & transaction_type == 'expense', 'going_out',
                                                                                                                ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'fashion',
-                                                                                                                      ifelse(grepl(salary,Transaction.Description) & transaction_type == 'revenue', 'salary',
-                                                                                                                             ifelse(grepl(interests_income,Transaction.Description) & transaction_type == 'revenue', 'interests_income',
-                                                                                                                                    ifelse(grepl(extra_income,Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
+                                                                                                                      ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'sport',
+                                                                                                                            ifelse(grepl(salary,Transaction.Description) & transaction_type == 'revenue', 'salary',
+                                                                                                                                   ifelse(grepl(interests_income,Transaction.Description) & transaction_type == 'revenue', 'interests_income',
+                                                                                                                                          ifelse(grepl(extra_income,Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
                                                                                                                        )
                                                                                                                 )
                                                                                                          )
@@ -190,6 +192,7 @@ total_movements_tagged <- total_movements %>%
                              ) 
                       )
                 )
+            )
          ) %>%
   select(Transaction.Date, month, Transaction.Description, tag, transaction_type, transaction_amount)
 
