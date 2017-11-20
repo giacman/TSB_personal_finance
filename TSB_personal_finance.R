@@ -70,14 +70,9 @@ total_movements_raw <- total_movements_raw %>%
 # Save Balance at beginning of analysis (to be used in tab 3)
 initial_balance <- total_movements_raw %>%
   filter(month == min(month))%>%
-  arrange(Transaction.Date)
+  arrange(Transaction.Date)%>%
   slice(n())%>%
   select(Balance)
-
-excluded <- total_movements_raw %>%
-  filter(month == min(month))%>%
-  arrange(Transaction.Date)%>%
-  select(Transaction.Date, Balance, Debit.Amount, Credit.Amount)
 
 # Removing first and last month to avoid incomplete data on months
 current_month <- format(parse_date_time(Sys.Date(), "ymd"), "%Y-%m")
