@@ -72,7 +72,7 @@ initial_balance <- total_movements_raw %>%
   filter(month == min(month))%>%
   arrange(Transaction.Date)%>%
   slice(n())%>%
-  select(Balance)
+  select(Balance, month)
 
 # Removing first and last month to avoid incomplete data on months
 current_month <- format(parse_date_time(Sys.Date(), "ymd"), "%Y-%m")
@@ -239,16 +239,22 @@ income_timeseries <- total_movements %>%
   mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
   mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
   group_by(month) %>%
-  summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))%>%
-  mutate(income = cumsum(monthly_net_income))%>%
-  select(month,income )
+  summarise(Balance = sum(Credit.Amount - Debit.Amount))%>%
+  bind_rows(initial_balance) %>%
+  arrange(month)%>%
+  mutate(Balance = cumsum(Balance))%>%
+  select(month,Balance)
 
-plot4 <- ggplot(data = income_timeseries, aes(x = month, y = income, group = 1)) + 
+
+plot4 <- ggplot(data = income_timeseries, aes(x = month, y = Balance, group = 1)) + 
   geom_line(color = 'blue')+
   geom_area(fill = 'blue', alpha = .1)
 
 ggplotly(plot4)
-# Savings = # get your savings here
+
+# Forecast
+
 # Target = # whats your target
-# Time Estimste to achieve target
+
+# Time Estimate to reach target
 
