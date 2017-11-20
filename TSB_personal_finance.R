@@ -3,6 +3,7 @@ library(zoo)
 library(dplyr)
 library(lubridate)
 library(rstudioapi)
+library(gridExtra)
 
 # Loading csv file statements ----
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -104,7 +105,7 @@ monthly_expenses
 mean_monthly_expenses
 
 # Plot monthly revenues vs monthly expenses
-ggplot()+
+plot1 <- ggplot()+
   geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
   geom_line(data = monthly_revenues, aes(x = month, y = monthly_revenues, group = 1), colour = 'blue')+
   geom_point(data = monthly_expenses, aes(x = month, y = monthly_expense))+
@@ -123,14 +124,12 @@ monthly_net_income
 mean_monthly_net_income = mean(monthly_net_income$monthly_net_income)
 
 # Plot Net Income
-ggplot()+
+plot2 <- ggplot()+
   geom_point(data = monthly_net_income, aes(x = month, y = monthly_net_income))+
   geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
   geom_hline(yintercept=0, colour = 'red')
 
-
-### TO DO: the two plots should become one split in two parts.
-
+grid.arrange(plot1, plot2, ncol=1) 
 
 # 2) Expenses and Revenues with breakdown voices over months 
 
