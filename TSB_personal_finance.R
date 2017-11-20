@@ -208,14 +208,15 @@ plot3 <- ggplot(data = total_movements_tagged[total_movements_tagged$transaction
 
 ggplotly(plot3)
 
-View(total_movements_tagged[total_movements_tagged$tag == 'uncategorised',])
+## Uncomment below to review uncategorised items
+# View(total_movements_tagged %>% 
+#   filter(tag == 'uncategorised')%>%
+#   arrange(transaction_amount))
 
+# Notes:
+# revenues and expenses go up  lot in March 2017 because of deposit moving in andd out
+# 26/08/2016 IZ *BELL BOI LTD CD 0111 e'  il Babbo che e' stato a Londra
 
-## Both revenues and expenses go up  lot in March 2017 because of deposit moving in andd out
-# note: 26/08/2016 IZ *BELL BOI LTD CD 0111 e'  il Babbo che e' stato a Londra
-
-
-## TO DO: find a way to visualise also the total by transaction type and the detail of each voice
 
 # Tab 3) Savings and Targets -----
 
