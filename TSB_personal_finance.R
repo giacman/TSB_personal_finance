@@ -4,6 +4,7 @@ library(dplyr)
 library(lubridate)
 library(rstudioapi)
 library(gridExtra)
+library(plotly)
 
 # Loading csv file statements ----
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -60,17 +61,29 @@ total_movements <- total_movements %>%
                       Debit.Amount)
   )
 
-total_movements <- rbind(total_movements,m1,m2)
+total_movements_raw <- rbind(total_movements,m1,m2)
 
 # adding month variable
-total_movements <- total_movements %>%
-  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m"))
+total_movements_raw <- total_movements_raw %>%
+  mutate(month = format(parse_date_time(total_movements_raw$Transaction.Date, "dmy"), "%Y-%m"))
+
+# Save Balance at beginning of analysis (to be used in tab 3)
+initial_balance <- total_movements_raw %>%
+  filter(month == min(month))%>%
+  arrange(Transaction.Date)%>%
+  slice(n())%>%
+  select(Balance, month)
 
 # Removing first and last month to avoid incomplete data on months
 current_month <- format(parse_date_time(Sys.Date(), "ymd"), "%Y-%m")
 
-total_movements <- total_movements %>%
+total_movements <- total_movements_raw %>%
   filter(month != current_month & month != min(month))
+
+total_movements %>%
+  filter(month == min(month))%>%
+  slice(1)%>%
+  select(Balance)
 
 # Excluding movements between accounts
 total_movements <- total_movements[!grepl('G VANNUCCHI',total_movements$Transaction.Description),]
@@ -129,25 +142,31 @@ plot2 <- ggplot()+
   geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
   geom_hline(yintercept=0, colour = 'red')
 
+ggplotly(plot1)
+ggplotly(plot2)
 grid.arrange(plot1, plot2, ncol=1) 
 
-# 2) Expenses and Revenues with breakdown voices over months 
+
+# Tab 2) Expenses and Revenues with breakdown voices over months ------
 
 # attach a tag to every transaction based on logic above:
 shelter <- ('CENTRAL|HOUSEKEEP|L B WALTHAM FOREST 48507504N|TIDYCHOICE|M TAYLOR|DEPOSIT PROTECTION|TIDYCHOI')
-nursery <- ('ANUTA DUNCA')
+forniture <- ('EMMALOVES CD 0111|LNK SELIN FOOD & W CD 0111 18FEB17|UNTO THIS LAST|ARGOS|MUJI|ANAMICLIMITED|IKEA LIMITED|ROSELAND')
+nursery <- ('ANUTA DUNCA|MICHELLE PEARSON|PAYPAL *JOHNLEWISP|ALESSANDRA COVINO|HM PASSPORT OFFICE')
 giving <- ('HELPINGRHI|WIKIMEDIAF|UNHCR|GUIDE DOGS')
 utilities <- ('BRGAS|VIRGIN|THAMES WATER|SKY DIGITAL|BRITISH GAS')
-learning <- ('GITHUB|COURSERAIN|LINKEDIN|LCODETHW|CODESCHOOL.COM|DATAQUEST.IO|CODECADEMY')
-media <- ('NETFLIX|Spotify|Prime|SONY|ITUNES.COM|NEW YORKER|PLAYSTATIO|NYTDIGITALSUBSCRIP')
-transport <- ('TFL.GOV.UK|UBER|Uber BV|LONDON OVERGROUND|ADDISONLEE|TFL CYCLE HIRE')
+learning <- ('GITHUB|COURSERAIN|LINKEDIN|LCODETHW|CODESCHOOL.COM|DATAQUEST.IO|CODECADEMY|UDEMY')
+media <- ('NETFLIX|Spotify|Prime|SONY|ITUNES.COM|NEW YORKER|PLAYSTATIO|NYTDIGITALSUBSCRIP|NEWYORKTIM')
+transport <- ('WALTHAMSTOW CYCLE|TFL.GOV.UK|UBER|Uber|LONDON OVERGROUND|ADDISONLEE|TFL CYCLE HIRE|ABOUT THE BIKE')
 grocery <- ('Co-op|SUPERMARKET|OCADORETAI|SAINSBURYS|EKOL')
 work_lunch <- ('HUSSEYS|CINNAMON|BOTTEGA|CAPTAIN|GASTRONOMICA|RIVER VIEW RESTAUR|PROSPECT OF WHITBY|RIVERVIEW SEAFOOD')
-travel_expenses <- ('GIANNELLIF|EUROS|RIALTO')
-travel_tickets <- ('RYANAIR|EASYJET|CARHIRE|TRENITALIA')
-eating_out <- ('MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17|FRANCO MANCA|SODO')
-fashion <- ('COS|LEVI STRAUSS|DR MARTENS')
-salary <- ('FLUBIT LIMITED')
+travel_expenses <- ('METROPOLITAN HOTEL|GIOVANNIRE|CHRISTIAN GUILD|GIANNELLIF|EUROS|RIALTO|GATWICK EXPRSS|FLEXICOVER.CO.UK|GATWICK SOUTH|Europcar.com|NIVI CREDIT')
+travel_tickets <- ('RYANAIR|EASYJET|CARHIRE|TRENITALIA|CITYJET|VUELING')
+eating_out <- ('AKARI UDON NOODLE|MARKSMAN|DINER|MAI SUSHI|PILGRIMS|EAT17|FRANCO MANCA|SODO|PIZZA EXPRESS|FRANZ|THE ALBION IN GOLD|DELIVEROO|DELIVEROOCOUK|HARE AND HOUNDS|PADRON|DISHOOM|THE BREAKFAST CLUB|SANTO REMEDIO|BELL BOI|POPPIESFISH|TONKOTSU|IL GUSCIO RESTAURA|MEAT MISSION|KAHAILA|LA BOUCHE|AMICI MIEI|BIRLEYS SANDWICHES|HOMESLICE|RED DOG SALOON|BURRO E SALVIA|OMBRA|BUSABA SHOREDITCH|TAYYABS|PING PONG')
+going_out <- ('THE CAMBERWELL ARM|THE NAGS HEAD|PICTUREHOU|BRITISH FILM INSTI|WWW.GENESISCINEMA|WWW.BARBICAN|OWL AND PUSSYCAT|TATE|THE STAR BY HACKN|ALBION|BAR KICK|THE KINGS ARMS|RICH MIX|THE FLORIST ARMS|WATER POET|CARGO|BEST OF THEATRE|MILAGROS|THE TALBOT|CASPAR SAMBROOK')
+fashion <- ('BEAU LONDON|TIMBERLAND|COS|LEVI STRAUSS|DR MARTENS|ARMYPANDAG|CALZEDONIA|SNEAKERSNDSTUFF|AESOP|BARBER & PARLOUR|TAYLOR TAYLOR')
+sport <- ('HARLANDS 2006133A-BODYSTUDI|PLAYFOOTBALL|DECATHLON|KOBUDORAKUTENSHOP|WWW.OPRO.COM')
+salary <- ('FLUBIT LIMITED|FLUBIT LTD')
 interests_income <- ('INTEREST')
 extra_income <- ('VANNUCCHI P|CARANDINI S|BATTAGLINI|CIONNINI')
 
@@ -167,10 +186,14 @@ total_movements_tagged <- total_movements %>%
                                                                                     ifelse(grepl(travel_expenses,Transaction.Description) & transaction_type == 'expense','travel_expenses',
                                                                                            ifelse(grepl(travel_tickets,Transaction.Description) & transaction_type == 'expense', 'travel_tickets',
                                                                                                   ifelse(grepl(eating_out,Transaction.Description) & transaction_type == 'expense', 'eating_out',
-                                                                                                         ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'fashion',
-                                                                                                                ifelse(grepl(salary,Transaction.Description) & transaction_type == 'revenue', 'salary',
-                                                                                                                       ifelse(grepl(interests_income,Transaction.Description) & transaction_type == 'revenue', 'interests_income',
-                                                                                                                              ifelse(grepl(extra_income,Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
+                                                                                                         ifelse(grepl(going_out,Transaction.Description) & transaction_type == 'expense', 'going_out',
+                                                                                                               ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'fashion',
+                                                                                                                      ifelse(grepl(sport,Transaction.Description) & transaction_type == 'expense', 'sport',
+                                                                                                                             ifelse(grepl(forniture,Transaction.Description) & transaction_type == 'expense', 'forniture',
+                                                                                                                                    ifelse(grepl(salary,Transaction.Description) & transaction_type == 'revenue', 'salary',
+                                                                                                                                           ifelse(grepl(interests_income,Transaction.Description) & transaction_type == 'revenue', 'interests_income',
+                                                                                                                                                  ifelse(grepl(extra_income,Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
+                                                                                                                                                  )
                                                                                                                        )
                                                                                                                 )
                                                                                                          )
@@ -186,31 +209,52 @@ total_movements_tagged <- total_movements %>%
                                   )
                              ) 
                       )
-                
+                )
+            )
          ) %>%
   select(Transaction.Date, month, Transaction.Description, tag, transaction_type, transaction_amount)
 
-ggplot(data = total_movements_tagged[total_movements_tagged$transaction_type == 'expense',], 
+plot3 <- ggplot(data = total_movements_tagged[total_movements_tagged$transaction_type == 'expense',], 
        aes(x = month, y = -1 * transaction_amount, fill = tag))+
   geom_bar(stat = 'identity')
 
-### TO DO add categories for pubs/cinemas/concerts and also forniture
-View(total_movements_tagged[total_movements_tagged$tag == 'uncategorised',])
+ggplotly(plot3)
 
-# tab 2) Action one: show only one month
+## Uncomment below to review uncategorised items
+# View(total_movements_tagged %>% 
+#   filter(tag == 'uncategorised')%>%
+#   arrange(transaction_amount))
 
-selected_month = '2017-09'
+# Notes:
+# revenues and expenses go up  lot in March 2017 because of deposit moving in andd out
+# 26/08/2016 IZ *BELL BOI LTD CD 0111 e'  il Babbo che e' stato a Londra
 
-selected_month_data <- total_movements_tagged %>%
-  filter(month == selected_month) %>%
-  group_by(tag, transaction_type) %>%
-  summarise(sum = sum(transaction_amount))
 
-## TO DO: find a way to visualise also the total by transaction type and the detail of each voice
+# Tab 3) Savings and Targets -----
 
-#4) Savings and Targets
+# calculate Income trend and forecasting
 
-# Savings = # get your savings here
+income_timeseries <- total_movements %>%
+  select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
+  mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
+  mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
+  group_by(month) %>%
+  summarise(Balance = sum(Credit.Amount - Debit.Amount))%>%
+  bind_rows(initial_balance) %>%
+  arrange(month)%>%
+  mutate(Balance = cumsum(Balance))%>%
+  select(month,Balance)
+
+
+plot4 <- ggplot(data = income_timeseries, aes(x = month, y = Balance, group = 1)) + 
+  geom_line(color = 'blue')+
+  geom_area(fill = 'blue', alpha = .1)
+
+ggplotly(plot4)
+
+# Forecast
+
 # Target = # whats your target
-# Time Estimste to achieve target
+
+# Time Estimate to reach target
 
