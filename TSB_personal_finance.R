@@ -61,17 +61,34 @@ total_movements <- total_movements %>%
                       Debit.Amount)
   )
 
-total_movements <- rbind(total_movements,m1,m2)
+total_movements_raw <- rbind(total_movements,m1,m2)
 
 # adding month variable
-total_movements <- total_movements %>%
-  mutate(month = format(parse_date_time(total_movements$Transaction.Date, "dmy"), "%Y-%m"))
+total_movements_raw <- total_movements_raw %>%
+  mutate(month = format(parse_date_time(total_movements_raw$Transaction.Date, "dmy"), "%Y-%m"))
+
+# Save Balance at beginning of analysis (to be used in tab 3)
+initial_balance <- total_movements_raw %>%
+  filter(month == min(month))%>%
+  arrange(Transaction.Date)
+  slice(n())%>%
+  select(Balance)
+
+excluded <- total_movements_raw %>%
+  filter(month == min(month))%>%
+  arrange(Transaction.Date)%>%
+  select(Transaction.Date, Balance, Debit.Amount, Credit.Amount)
 
 # Removing first and last month to avoid incomplete data on months
 current_month <- format(parse_date_time(Sys.Date(), "ymd"), "%Y-%m")
 
-total_movements <- total_movements %>%
+total_movements <- total_movements_raw %>%
   filter(month != current_month & month != min(month))
+
+total_movements %>%
+  filter(month == min(month))%>%
+  slice(1)%>%
+  select(Balance)
 
 # Excluding movements between accounts
 total_movements <- total_movements[!grepl('G VANNUCCHI',total_movements$Transaction.Description),]
@@ -220,8 +237,22 @@ ggplotly(plot3)
 
 # Tab 3) Savings and Targets -----
 
-# calculate cumulative savings.
+# calculate Income trend and forecasting
 
+income_timeseries <- total_movements %>%
+  select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
+  mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
+  mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
+  group_by(month) %>%
+  summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))%>%
+  mutate(income = cumsum(monthly_net_income))%>%
+  select(month,income )
+
+plot4 <- ggplot(data = income_timeseries, aes(x = month, y = income, group = 1)) + 
+  geom_line(color = 'blue')+
+  geom_area(fill = 'blue', alpha = .1)
+
+ggplotly(plot4)
 # Savings = # get your savings here
 # Target = # whats your target
 # Time Estimste to achieve target
