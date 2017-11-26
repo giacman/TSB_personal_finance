@@ -194,7 +194,12 @@ ui = {
                             'monthly',
                             'yearly')
                 , selected = 'weekly'
-                )
+                ),
+    conditionalPanel("input.panel == 'Monthly View'",
+                     checkboxInput('show_tables',
+                                   'Show Tables',
+                                   value = FALSE)
+    )
   ),
     mainPanel(
       tabsetPanel(id = 'panel',
