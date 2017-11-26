@@ -119,21 +119,6 @@ server = shinyServer(function(input, output){
     group_by(month) %>%
     summarise(monthly_expense = sum(Debit.Amount))
  
-  # # Plot monthly revenues vs monthly expenses
-  # plot1 <- ggplot()+
-  #   geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
-  #   geom_line(data = monthly_revenues, aes(x = month, y = monthly_revenues, group = 1), colour = 'blue')+
-  #   geom_point(data = monthly_expenses, aes(x = month, y = monthly_expense))+
-  #   geom_line(data = monthly_expenses, aes(x = month, y = monthly_expense, group = 1), colour = 'red')
-
-  # Net Income
-  monthly_net_income <- total_movements %>%
-    select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
-    mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
-    mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
-    group_by(month) %>%
-    summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))
-  
   # #Table 
   # a <- reactive({
   #   
@@ -143,7 +128,9 @@ server = shinyServer(function(input, output){
   #   DT::datatable(a())
   # })
   # 
-  plot1 <- reactive({
+  
+  # Plot monthly revenues vs monthly expenses
+  plot_rev_exp <- reactive({
     ggplot()+
       geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
       geom_line(data = monthly_revenues, aes(x = month, y = monthly_revenues, group = 1), colour = 'blue')+
@@ -151,39 +138,29 @@ server = shinyServer(function(input, output){
       geom_line(data = monthly_expenses, aes(x = month, y = monthly_expense, group = 1), colour = 'red')
   })
   
-  output$plotly_plot_1 <- renderPlotly({plot1})
-  
-  # b <- reactive({})
-  # output$tab_a <- DT::renderDataTable({
-  #   DT::datatable(a())
-  #})
-  
-  #plot_b <- reactive({})
-  
-  #output$plotly_plot_b <- renderPlotly({})
+  output$plot_rev_exp <- renderPlotly({plot_rev_exp()})
 
-  # plot monthly revenues and expenses
-  plot1 <- reactive({
-    ggplot()+
-      geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
-      geom_line(data = monthly_revenues, aes(x = month, y = monthly_revenues, group = 1), colour = 'blue')+
-      geom_point(data = monthly_expenses, aes(x = month, y = monthly_expense))+
-      geom_line(data = monthly_expenses, aes(x = month, y = monthly_expense, group = 1), colour = 'red')
-  })
+  
+  
+  # Net Income
+  monthly_net_income <- total_movements %>%
+    select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
+    mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
+    mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
+    group_by(month) %>%
+    summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))
   
   # Plot Net Income
-  plot2 <- reactive({
+  plot_net_income <- reactive({
     ggplot()+
       geom_point(data = monthly_net_income, aes(x = month, y = monthly_net_income))+
       geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
       geom_hline(yintercept=0, colour = 'red')
   })
 
-  plot_grid <- reactive({
-    grid.arrange(plot1(), plot2(), ncol=1)
-    })
+
     
-  output$plotted_grid <- renderPlot(plot_grid())
+  output$plot_net_income <- renderPlotly(plot_net_income())
 })
 
 #ggplotly(plot1)
@@ -194,13 +171,39 @@ server = shinyServer(function(input, output){
 
 ui = {
   fluidPage(
+    headerPanel('TSB Personal Finances Dashobard'),
+    sidebarPanel(
+      width = 2 ,
+      selectInput('time_interval', 'select time period:',
+                                   choices = c('daily',
+                                               'weekly',
+                                               'monthly',
+                                               'yearly')
+                                   , selected = 'weekly'
+                  ),
+    dateRangeInput('date', 'select time interval',
+                   start = Sys.Date() %m+% months(-6),
+                   end = Sys.Date(),
+                   min = '2012-01-01',
+                   max = Sys.Date(),
+                   width = 300
+                   ),
+    selectInput('time_interval', 'select time period:',
+                choices = c('daily',
+                            'weekly',
+                            'monthly',
+                            'yearly')
+                , selected = 'weekly'
+                )
+  ),
     mainPanel(
       tabsetPanel(id = 'panel',
-                  tabPanel('a',
+                  tabPanel('Monthly View',
                            # br(),
                            # DT::dataTableOutput('tab_a', width = 1500),
                            # br(),
-                           plotOutput('plotted_grid')
+                           plotlyOutput('plot_net_income'),
+                           plotlyOutput('plot_rev_exp')
                   )
                   # ,
                   # tabPanel('b',
