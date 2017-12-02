@@ -11,6 +11,7 @@ library(gdata)
 library(ggplot2)
 library(gridExtra)
 library(plotly)
+library(tidyr)
 
 
 # Loading csv file statements ----
@@ -118,16 +119,6 @@ server = shinyServer(function(input, output){
     na.omit() %>%
     group_by(month) %>%
     summarise(monthly_expense = sum(Debit.Amount))
- 
-  # #Table 
-  # a <- reactive({
-  #   
-  # })
-  # 
-  # output$tab_a <- DT::renderDataTable({
-  #   DT::datatable(a())
-  # })
-  # 
 
   # Net Income
   monthly_net_income <- total_movements %>%
@@ -137,13 +128,17 @@ server = shinyServer(function(input, output){
     group_by(month) %>%
     summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))
   
-
-  test <- reactive(
+  monthly_movements <- inner_join(monthly_revenues,monthly_expenses, by = "month")
+  monthly_movements <- inner_join(monthly_movements,monthly_net_income, by = "month")
+  
+  
+  # Plots
+  first_tab_plot <- reactive(
     
-    if(input$show_tables == TRUE){
+    if(input$show_income == TRUE){
       
       # Plot Net Income
-      plot_test <-  ggplot()+
+      ggplot()+
           geom_point(data = monthly_net_income, aes(x = month, y = monthly_net_income))+
           geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
           geom_hline(yintercept=0, colour = 'red')
@@ -151,7 +146,7 @@ server = shinyServer(function(input, output){
     }else {
       
       # Plot monthly revenues vs monthly expenses
-      plot_test <- ggplot()+
+      ggplot()+
           geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
           geom_line(data = monthly_revenues, aes(x = month, y = monthly_revenues, group = 1), colour = 'blue')+
           geom_point(data = monthly_expenses, aes(x = month, y = monthly_expense))+
@@ -159,12 +154,24 @@ server = shinyServer(function(input, output){
     }
   )
   
-output$plotly_test <- renderPlotly({test()})
+output$first_tab_plotly <- renderPlotly({first_tab_plot()})
 
+  # Tables
+
+  first_tab_table <- reactive({
+    monthly_movements %>%
+      gather(type, amount, -month) %>% 
+      spread(month,amount)
+  })
+
+  
+  output$first_tab_table <- DT::renderDataTable({
+    DT::datatable(first_tab_table())
+  })
+
+
+  
 })
-
-#ggplotly(plot1)
-#ggplotly(plot2)
 
 
 # Ui -------------------------------------------------
@@ -196,28 +203,19 @@ ui = {
                 , selected = 'weekly'
                 ),
     conditionalPanel("input.panel == 'Monthly View'",
-                     checkboxInput('show_tables',
-                                   'Show Tables',
+                     checkboxInput('show_income',
+                                   'Show Net Income',
                                    value = FALSE)
     )
   ),
     mainPanel(
       tabsetPanel(id = 'panel',
                   tabPanel('Monthly View',
-                           # br(),
-                           # DT::dataTableOutput('tab_a', width = 1500),
-                           # br(),
-                           #plotlyOutput('plot_net_income'),
-                           #plotlyOutput('plot_rev_exp')
-                           plotlyOutput('plotly_test')
+                           br(),
+                           plotlyOutput('first_tab_plotly'),
+                           br(),
+                           DT::dataTableOutput('first_tab_table', width = 1500)
                   )
-                  # ,
-                  # tabPanel('b',
-                  #          br(),
-                  #          DT::dataTableOutput('tab_b', width = 1500),
-                  #          br(),
-                  #          plotlyOutput('plotly_plot_b')
-                  # )
       )
       
       
