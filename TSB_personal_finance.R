@@ -128,20 +128,7 @@ server = shinyServer(function(input, output){
   #   DT::datatable(a())
   # })
   # 
-  
-  # Plot monthly revenues vs monthly expenses
-  plot_rev_exp <- reactive({
-    ggplot()+
-      geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
-      geom_line(data = monthly_revenues, aes(x = month, y = monthly_revenues, group = 1), colour = 'blue')+
-      geom_point(data = monthly_expenses, aes(x = month, y = monthly_expense))+
-      geom_line(data = monthly_expenses, aes(x = month, y = monthly_expense, group = 1), colour = 'red')
-  })
-  
-  output$plot_rev_exp <- renderPlotly({plot_rev_exp()})
 
-  
-  
   # Net Income
   monthly_net_income <- total_movements %>%
     select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
@@ -150,17 +137,30 @@ server = shinyServer(function(input, output){
     group_by(month) %>%
     summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))
   
-  # Plot Net Income
-  plot_net_income <- reactive({
-    ggplot()+
-      geom_point(data = monthly_net_income, aes(x = month, y = monthly_net_income))+
-      geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
-      geom_hline(yintercept=0, colour = 'red')
-  })
 
-
+  test <- reactive(
     
-  output$plot_net_income <- renderPlotly(plot_net_income())
+    if(input$show_tables == TRUE){
+      
+      # Plot Net Income
+      plot_test <-  ggplot()+
+          geom_point(data = monthly_net_income, aes(x = month, y = monthly_net_income))+
+          geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
+          geom_hline(yintercept=0, colour = 'red')
+
+    }else {
+      
+      # Plot monthly revenues vs monthly expenses
+      plot_test <- ggplot()+
+          geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
+          geom_line(data = monthly_revenues, aes(x = month, y = monthly_revenues, group = 1), colour = 'blue')+
+          geom_point(data = monthly_expenses, aes(x = month, y = monthly_expense))+
+          geom_line(data = monthly_expenses, aes(x = month, y = monthly_expense, group = 1), colour = 'red')
+    }
+  )
+  
+output$plotly_test <- renderPlotly({test()})
+
 })
 
 #ggplotly(plot1)
@@ -207,8 +207,9 @@ ui = {
                            # br(),
                            # DT::dataTableOutput('tab_a', width = 1500),
                            # br(),
-                           plotlyOutput('plot_net_income'),
-                           plotlyOutput('plot_rev_exp')
+                           #plotlyOutput('plot_net_income'),
+                           #plotlyOutput('plot_rev_exp')
+                           plotlyOutput('plotly_test')
                   )
                   # ,
                   # tabPanel('b',
