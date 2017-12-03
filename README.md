@@ -8,4 +8,20 @@ Requirements:
 * R and libraries (including shiny)
 * R-Studio
 
-When the App is run, the Dashboard will be visible in a tab in your Browser.
+The App has to be run from R-Studio. The Dashboard will open in a tab in your default Browser.
+
+
+[ '|-- TSB_personal_finance',
+  '    |-- .gitignore',
+  '    |-- README.md',
+  '    |-- TSB_personal_finance.R',
+  '    |-- statements',
+  '        |-- tsb_classic_enhance',
+  '        |   |-- 2017_1.csv',
+  '        |   |-- 2017_2.csv',
+  '        |   |-- 2017_3.csv',
+  '        |-- tsb_classic_plus',
+  '            |-- 2017_1.csv',
+  '            |-- 2017_2.csv',
+  '            |-- 2017_3.csv',
+  '' ]
