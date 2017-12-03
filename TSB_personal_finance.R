@@ -4,12 +4,9 @@
 
 library(shiny)
 library(rstudioapi)
-library(zoo)
 library(dplyr)
 library(lubridate)
-library(gdata)
 library(ggplot2)
-library(gridExtra)
 library(plotly)
 library(tidyr)
 
@@ -96,10 +93,6 @@ total_movements %>%
 # Excluding movements between accounts
 total_movements <- total_movements[!grepl('G VANNUCCHI',total_movements$Transaction.Description),]
 
-# Cleaning workspace
-keep(total_movements,initial_balance, sure = TRUE)
-
-
 # Server ---------------------------------------------
 
 server = shinyServer(function(input, output){
@@ -135,7 +128,7 @@ server = shinyServer(function(input, output){
   # Plots
   first_tab_plot <- reactive(
     
-    if(input$show_income == TRUE){
+    if(input$plot_income == TRUE){
       
       # Plot Net Income
       ggplot()+
@@ -154,23 +147,45 @@ server = shinyServer(function(input, output){
     }
   )
   
-output$first_tab_plotly <- renderPlotly({first_tab_plot()})
+output$first_tab_plotly <- renderPlotly({
+  ggplotly(first_tab_plot()) %>% 
+    layout(autosize = F, width = 1200, height = 400)
+  })
 
   # Tables
 
   first_tab_table <- reactive({
     monthly_movements %>%
       gather(type, amount, -month) %>% 
+      mutate(type = factor(type, levels = c('monthly_revenues', 'monthly_expense', 'monthly_net_income')))%>%
       spread(month,amount)
   })
 
   
   output$first_tab_table <- DT::renderDataTable({
-    DT::datatable(first_tab_table())
+    t <- DT::datatable(first_tab_table(), rownames = FALSE, 
+    extensions = c("Scroller","FixedColumns"), 
+    selection = "none",
+    options = list(
+      fixedColumns = list(leftColumns = 1, rightColumns = 0),
+      pageLength = 15,
+      bInfo = FALSE,
+      pageWidth = 10,
+      initComplete = DT::JS(
+        "function(settings, json) {",
+        "$(this.api().table().header()).css({'background-color': '#004564', 'color': '#fff'});",
+        "}"
+      )
+      ,
+      scrollX = TRUE,
+      sScrollY = '30vh',
+      bPaginate = FALSE,
+      bFilter = FALSE
+    ))
+    t <- t %>% DT::formatCurrency(2:ncol(first_tab_table()), digits = 2, currency = '£') 
+  
   })
 
-
-  
 })
 
 
@@ -203,8 +218,8 @@ ui = {
                 , selected = 'weekly'
                 ),
     conditionalPanel("input.panel == 'Monthly View'",
-                     checkboxInput('show_income',
-                                   'Show Net Income',
+                     checkboxInput('plot_income',
+                                   'Plot Net Income',
                                    value = FALSE)
     )
   ),
@@ -214,7 +229,7 @@ ui = {
                            br(),
                            plotlyOutput('first_tab_plotly'),
                            br(),
-                           DT::dataTableOutput('first_tab_table', width = 1500)
+                           DT::dataTableOutput('first_tab_table', width = 1200)
                   )
       )
       

@@ -1,6 +1,11 @@
-# Personal Finance Tool
-R script to visualise and monitor personal finances from TSB account statements.
+# TSB Shiny Finance
 
-For each account statements have to be manually downloaded as csv files into a /statements/account_name folder. This folder has to be placed under repo directory.
+R Shiny App to visualise and monitor personal finances using TSB account statements.
 
-R-Studio is required to run this script.
+For each TSB account owned, statements have to be manually downloaded as csv file and put into a /statements/account_name folder under the root directory. This folder is added to the .gitignore.
+
+Requirements: 
+* R and libraries (including shiny)
+* R-Studio
+
+When the App is run, the Dashboard will be visible in a tab in your Browser.
