@@ -1,4 +1,4 @@
-# TSB Shiny Finance
+# TSB FInance Shiny Dashboard
 
 R Shiny App to visualise and monitor personal finances using TSB account statements.
 
