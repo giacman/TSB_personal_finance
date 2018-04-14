@@ -13,17 +13,15 @@ A Shiny app to visualise and monitor your personal finances using TSB Bank state
 
 [![expenses_breakdown.png](https://s18.postimg.cc/ongzq0i49/expenses_breakdown.png)](https://postimg.cc/image/91zo6265x/)
 
-### Requirements: 
-
-- Install `R`(https://cran.r-project.org/)
-- Install `R-Studio`
 
 ### Setup:
+- Install `R`(https://cran.r-project.org/)
+
 - run `Rscript setup.R` to install libraries.
 - Download your TSB bank statements as csv files and put them in `/statements/account_name` folder under the root directory.
 
 ### Run:
-Open `TSB_personal_finance.R` in `R-Studio` and click `Run App`. The app will open in your default Browser.
+In the terminal run `RScript start.R`
 
 #### Directory layout
 
@@ -40,7 +38,6 @@ Open `TSB_personal_finance.R` in `R-Studio` and click `Run App`. The app will op
             |-- 2017_2.csv
             |-- 2017_3.csv
             
-            
-### Limitation: 
-- The App has to be run from R-Studio.
+
+### Limitations:
 - account names are currently hardcoded.
