@@ -134,7 +134,10 @@ server = shinyServer(function(input, output){
       ggplot()+
           geom_point(data = monthly_net_income, aes(x = month, y = monthly_net_income))+
           geom_line(data = monthly_net_income, aes(x = month, y = monthly_net_income, group = 1))+
-          geom_hline(yintercept=0, colour = 'red')
+          geom_hline(yintercept=0, colour = 'red')+
+        theme(axis.text.x = element_text(angle = 45, hjust = 3),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank())
 
     }else {
       
@@ -143,13 +146,18 @@ server = shinyServer(function(input, output){
           geom_point(data = monthly_revenues, aes(x = month, y = monthly_revenues))+
           geom_line(data = monthly_revenues, aes(x = month, y = monthly_revenues, group = 1), colour = 'blue')+
           geom_point(data = monthly_expenses, aes(x = month, y = monthly_expense))+
-          geom_line(data = monthly_expenses, aes(x = month, y = monthly_expense, group = 1), colour = 'red')
+          geom_line(data = monthly_expenses, aes(x = month, y = monthly_expense, group = 1), colour = 'red')+
+        theme(axis.text.x = element_text(angle = 45, hjust = 3),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank())
+        
     }
   )
   
 output$first_tab_plotly <- renderPlotly({
   ggplotly(first_tab_plot()) %>% 
-    layout(autosize = F, width = 1200, height = 400)
+    layout(autosize = F, width = 1200, height = 400,
+           margin = list(b = 160))
   })
 
   # Tables
@@ -239,12 +247,16 @@ output$first_tab_plotly <- renderPlotly({
       # Plot Expenses and Revenues category breakdown
       ggplot(data = total_movements_tagged[total_movements_tagged$transaction_type == 'expense',],
                     aes(x = month, y = -1 * transaction_amount, fill = tag))+
-      geom_bar(stat = 'identity')
+      geom_bar(stat = 'identity')+
+      theme(axis.text.x = element_text(angle = 45, hjust = 3),
+            axis.title.x=element_blank(),
+            axis.title.y=element_blank())
     })
   
   output$second_tab_plotly <- renderPlotly({
     ggplotly(second_tab_plot()) %>% 
-      layout(autosize = F, width = 1200, height = 400)
+      layout(autosize = F, width = 1200, height = 400,
+             margin = list(b = 160))
   })
   
   # Tab 3 Savings over time -----
@@ -266,12 +278,15 @@ output$first_tab_plotly <- renderPlotly({
     # Plot Savings over time
     ggplot(data = income_timeseries, aes(x = month, y = Balance, group = 1)) +
       geom_line(color = 'blue')+
-      geom_area(fill = 'blue', alpha = .1)
+      geom_area(fill = 'blue', alpha = .1)+
+      theme(axis.text.x = element_text(angle = 45, hjust = 3),
+            axis.title.x=element_blank())
   })
   
   output$third_tab_plotly <- renderPlotly({
     ggplotly(third_tab_plot()) %>% 
-      layout(autosize = F, width = 1200, height = 400)
+      layout(autosize = F, width = 1200, height = 400,
+             margin = list(b = 160))
   })
   
 })
@@ -287,7 +302,7 @@ ui = {
                                                'weekly',
                                                'monthly',
                                                'yearly')
-                                   , selected = 'weekly'
+                                   , selected = 'monthly'
                   ),
     dateRangeInput('date', 'select time interval',
                    start = Sys.Date() %m+% months(-6),
@@ -296,13 +311,6 @@ ui = {
                    max = Sys.Date(),
                    width = 300
                    ),
-    selectInput('time_interval', 'select time period:',
-                choices = c('daily',
-                            'weekly',
-                            'monthly',
-                            'yearly')
-                , selected = 'weekly'
-                ),
     conditionalPanel("input.panel == 'Monthly View'",
                      checkboxInput('plot_income',
                                    'Plot Net Income',
