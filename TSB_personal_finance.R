@@ -247,6 +247,33 @@ output$first_tab_plotly <- renderPlotly({
       layout(autosize = F, width = 1200, height = 400)
   })
   
+  # Tab 3 Savings over time -----
+  
+  # calculate Savings over time
+  
+  income_timeseries <- total_movements %>%
+    select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
+    mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
+    mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
+    group_by(month) %>%
+    summarise(Balance = sum(Credit.Amount - Debit.Amount))%>%
+    bind_rows(initial_balance) %>%
+    arrange(month)%>%
+    mutate(Balance = cumsum(Balance))%>%
+    select(month,Balance)
+  
+  third_tab_plot <- reactive({
+    # Plot Savings over time
+    ggplot(data = income_timeseries, aes(x = month, y = Balance, group = 1)) +
+      geom_line(color = 'blue')+
+      geom_area(fill = 'blue', alpha = .1)
+  })
+  
+  output$third_tab_plotly <- renderPlotly({
+    ggplotly(third_tab_plot()) %>% 
+      layout(autosize = F, width = 1200, height = 400)
+  })
+  
 })
 # Ui -------------------------------------------------
 
@@ -293,51 +320,16 @@ ui = {
                   tabPanel('Expenses breakdown by category',
                            br(),
                            plotlyOutput('second_tab_plotly')
+                  ),
+                  tabPanel('Savings over time',
+                           br(),
+                           plotlyOutput('third_tab_plotly')
                   )
       )
       
       
     )
   )}
-
-
-## Uncomment below to review uncategorised items
-# View(total_movements_tagged %>%
-#   filter(tag == 'uncategorised')%>%
-#   arrange(transaction_amount))
-
-# Notes:
-# revenues and expenses go up  lot in March 2017 because of deposit moving in andd out
-# 26/08/2016 IZ *BELL BOI LTD CD 0111 e'  il Babbo che e' stato a Londra
-
-
-# Tab 3) Savings and Targets -----
-
-# calculate Income trend and forecasting
-
-income_timeseries <- total_movements %>%
-  select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
-  mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
-  mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
-  group_by(month) %>%
-  summarise(Balance = sum(Credit.Amount - Debit.Amount))%>%
-  bind_rows(initial_balance) %>%
-  arrange(month)%>%
-  mutate(Balance = cumsum(Balance))%>%
-  select(month,Balance)
-
-
-plot4 <- ggplot(data = income_timeseries, aes(x = month, y = Balance, group = 1)) +
-  geom_line(color = 'blue')+
-  geom_area(fill = 'blue', alpha = .1)
-
-ggplotly(plot4)
-
-# Forecast
-
-# Target = # whats your target
-
-# Time Estimate to reach target
 
 
 # App ------------------------------------------------
