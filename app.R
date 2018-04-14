@@ -1,5 +1,4 @@
 library(shiny)
-library(rstudioapi)
 library(dplyr)
 library(lubridate)
 library(ggplot2)
@@ -9,12 +8,8 @@ library(DT)
 
 ## Loading statements ----
 
-# Get path to statements directory
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-path <- getwd()
-
 # load files in classic account
-path_classic = paste0(path,"/statements/tsb_classic_enhance/")
+path_classic = "./statements/tsb_classic_enhance/"
 temp_classic = list.files(path = path_classic, pattern="*.csv")
 
 classic_enhance_list = list()
@@ -28,7 +23,7 @@ classic_enhance = do.call(rbind, classic_enhance_list)
 rm(classic_enhance_list)
 
 # load files in classic plus
-path_plus = paste0(path,"/statements/tsb_classic_plus/")
+path_plus = "./statements/tsb_classic_plus/"
 temp_plus = list.files(path = path_plus, pattern="*.csv")
 
 classic_plus_list = list()
@@ -42,7 +37,7 @@ for (i in 1:length(temp_plus)){
 classic_plus = do.call(rbind, classic_plus_list)
 rm(classic_plus_list)
 
-total_movements_row <- rbind(classic_enhance, classic_plus)
+total_movements_raw <- rbind(classic_enhance, classic_plus)
 
 # Processing data ----
 
@@ -342,3 +337,4 @@ ui = {
 
 # App ------------------------------------------------
 shinyApp(ui = ui, server = server)
+
