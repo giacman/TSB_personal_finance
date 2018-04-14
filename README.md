@@ -1,15 +1,19 @@
 # TSB Finance Shiny Dashboard
 
-R Shiny App to visualise and monitor personal finances using TSB account statements.
+Shiny App to visualise and monitor your personal finances using TSB Bank account statements. The Dashboard will open in your default Browser.
 
-For each TSB account owned, statements have to be manually downloaded as csv file and put into a /statements/account_name folder under the root directory. This folder is added to the `.gitignore`.
 
-Requirements: 
+### Requirements: 
 
-* `R` and required libraries (including `shiny`)
-* `R-Studio`
+- Install `R`(https://cran.r-project.org/)
+- Install `R-Studio`
 
-The App has to be run from R-Studio. The Dashboard will open in a tab in your default Browser.
+### Setup:
+- run `Rscript setup.R` to install libraries.
+- Download your TSB bank statements as csv files and put them in `/statements/account_name` folder under the root directory.
+
+### Run:
+Open `TSB_personal_finance.R` in `R-Studio` and click `Run App`. The app will open in your default Browser.
 
 #### Directory layout
 
@@ -18,7 +22,7 @@ The App has to be run from R-Studio. The Dashboard will open in a tab in your de
     ├── TSB_personal_finance.R # Shiny app file
     ├── statements # folder used to save account statements
         ├──tsb_classic_enhance  # subfolder with name of the account
-        |   |-- 2017_1.csv # downloaded statement
+        |   |-- 2017_1.csv 
         |   |-- 2017_2.csv
         |   |-- 2017_3.csv
         |-- tsb_classic_plus
@@ -27,3 +31,6 @@ The App has to be run from R-Studio. The Dashboard will open in a tab in your de
             |-- 2017_3.csv
             
             
+### Limitation: 
+- The App has to be run from R-Studio.
+- account names are currently hardcoded.
