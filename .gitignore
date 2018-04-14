@@ -1,5 +1,6 @@
-.csv
-.DS_Store
+statements
+*.csv
+*.DS_Store
 
 # History files
 .Rhistory
