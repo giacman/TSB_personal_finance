@@ -2,6 +2,15 @@
 
 A Shiny app to visualise and monitor your personal finances using TSB Bank statements. The dashboard opens in your default Browser and allows you to see Revenue and Expenses over time, Net Income, Cost category breakdown and Savings over time.
 
+### Setup:
+- Install `R`(https://cran.r-project.org/)
+
+- run `Rscript setup.R` to install libraries.
+- Download your TSB bank statements as csv files and put them in `/statements/account_name` folder under the root directory.
+
+### Run:
+In the terminal run `RScript start.R`
+
 ### Screenshots:
 
 [![revenues_and_expenses.png](https://s18.postimg.cc/m658isvnt/revenues_and_expenses.png)](https://postimg.cc/image/9er2calvp/)
@@ -14,20 +23,13 @@ A Shiny app to visualise and monitor your personal finances using TSB Bank state
 [![expenses_breakdown.png](https://s18.postimg.cc/ongzq0i49/expenses_breakdown.png)](https://postimg.cc/image/91zo6265x/)
 
 
-### Setup:
-- Install `R`(https://cran.r-project.org/)
-
-- run `Rscript setup.R` to install libraries.
-- Download your TSB bank statements as csv files and put them in `/statements/account_name` folder under the root directory.
-
-### Run:
-In the terminal run `RScript start.R`
-
 #### Directory layout
 
     ├── .gitignore
+    ├── app.R
     ├── README.md
-    ├── TSB_personal_finance.R # Shiny app file
+    ├── setup.R
+    ├── start.R
     ├── statements # folder used to save account statements
         ├──tsb_classic_enhance  # subfolder with name of the account
         |   |-- 2017_1.csv 
@@ -38,6 +40,5 @@ In the terminal run `RScript start.R`
             |-- 2017_2.csv
             |-- 2017_3.csv
             
-
 ### Limitations:
 - account names are currently hardcoded.
