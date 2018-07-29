@@ -15,6 +15,9 @@ temp_classic = list.files(path = path_classic, pattern="*.csv")
 classic_enhance_list = list()
 for (i in 1:length(temp_classic)){
   df <- read.csv(paste0(path_classic,temp_classic[i]))
+  drops <- c("X")
+  df <- df[ , !(names(df) %in% drops)]
+  names(df) <- tolower(names(df))
   classic_enhance_list[[i]] <- df
   rm(df)
 }
@@ -30,6 +33,9 @@ classic_plus_list = list()
 
 for (i in 1:length(temp_plus)){
   df <- read.csv(paste0(path_plus,temp_plus[i]))
+  drops <- c("X")
+  df <- df[ , !(names(df) %in% drops)]
+  names(df) <- tolower(names(df))
   classic_plus_list[[i]] <- df
   rm(df)
 }
@@ -43,14 +49,14 @@ total_movements_raw <- rbind(classic_enhance, classic_plus)
 
 # adding month variable
 total_movements_raw <- total_movements_raw %>%
-  mutate(month = format(parse_date_time(total_movements_raw$Transaction.Date, "dmy"), "%Y-%m"))
+  mutate(month = format(parse_date_time(total_movements_raw$transaction.date, "dmy"), "%Y-%m"))
 
-# Save Balance at beginning of analysis (to be used later in tab 3)
+# Save balance at beginning of analysis (to be used later in tab 3)
 initial_balance <- total_movements_raw %>%
   filter(month == min(month))%>%
-  arrange(Transaction.Date)%>%
+  arrange(transaction.date)%>%
   slice(n())%>%
-  select(Balance, month)
+  select(balance, month)
 
 # Removing first and last month to avoid incomplete data on months
 current_month <- format(parse_date_time(Sys.Date(), "ymd"), "%Y-%m")
@@ -61,10 +67,10 @@ total_movements <- total_movements_raw %>%
 total_movements %>%
   filter(month == min(month))%>%
   slice(1)%>%
-  select(Balance)
+  select(balance)
 
 # Excluding movements between accounts
-total_movements <- total_movements[!grepl('G VANNUCCHI',total_movements$Transaction.Description),]
+total_movements <- total_movements[!grepl('G VANNUCCHI',total_movements$transaction.description),]
 
 # Adding categories to transaction names ----
 shelter <- ('CENTRAL|HOUSEKEEP|L B WALTHAM FOREST 48507504N|TIDYCHOICE|M TAYLOR|DEPOSIT PROTECTION|TIDYCHOI')
@@ -96,25 +102,25 @@ server = shinyServer(function(input, output){
   
   # Monthly Average Revenues
   monthly_revenues <- total_movements %>%
-    select(month, Transaction.Date, Credit.Amount,Transaction.Type, Transaction.Description ) %>%
+    select(month, transaction.date, credit.amount,transaction.type, transaction.description ) %>%
     na.omit() %>%
     group_by(month) %>%
-    summarise(monthly_revenues = sum(Credit.Amount))
+    summarise(monthly_revenues = sum(credit.amount))
   
   # Monthly Average Expenses 
   monthly_expenses <- total_movements %>%
-    select(month, Transaction.Date, Debit.Amount,Transaction.Type, Transaction.Description ) %>%
+    select(month, transaction.date, debit.amount,transaction.type, transaction.description ) %>%
     na.omit() %>%
     group_by(month) %>%
-    summarise(monthly_expense = sum(Debit.Amount))
+    summarise(monthly_expense = sum(debit.amount))
 
   # Net Income
   monthly_net_income <- total_movements %>%
-    select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
-    mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
-    mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
+    select(month, transaction.date, debit.amount,credit.amount, transaction.type, transaction.description ) %>%
+    mutate(credit.amount = replace(credit.amount,is.na(credit.amount),0))%>%
+    mutate(debit.amount = replace(debit.amount,is.na(debit.amount),0))%>%
     group_by(month) %>%
-    summarise(monthly_net_income = sum(Credit.Amount - Debit.Amount))
+    summarise(monthly_net_income = sum(credit.amount - debit.amount))
   
   monthly_movements <- inner_join(monthly_revenues,monthly_expenses, by = "month")
   monthly_movements <- inner_join(monthly_movements,monthly_net_income, by = "month")
@@ -193,28 +199,28 @@ output$first_tab_plotly <- renderPlotly({
   # tab 2 Expenses and Revenues category breakdown ----
   
   total_movements_tagged <- total_movements %>%
-    mutate(transaction_amount = ifelse(!is.na(Debit.Amount), -1 * Debit.Amount,Credit.Amount )) %>%
-    mutate(transaction_type = ifelse(!is.na(Debit.Amount), 'expense','revenue')) %>%
-    mutate(Transaction.Description = as.character(Transaction.Description))%>%
-    mutate(tag = ifelse(grepl(shelter,Transaction.Description) & transaction_type == 'expense', 'shelter',
-                        ifelse(grepl(nursery,Transaction.Description) & transaction_type == 'expense', 'nursery',
-                               ifelse(grepl(giving,Transaction.Description) & transaction_type == 'expense', 'giving',
-                                      ifelse(grepl(utilities,Transaction.Description) & transaction_type == 'expense', 'utilities',
-                                             ifelse(grepl(learning,Transaction.Description) & transaction_type == 'expense','learning',
-                                                    ifelse(grepl(media,Transaction.Description) & transaction_type == 'expense', 'media',
-                                                           ifelse(grepl(transport,Transaction.Description) & transaction_type == 'expense','transport',
-                                                                  ifelse(grepl(grocery,Transaction.Description) & transaction_type == 'expense','grocery',
-                                                                         ifelse(grepl(work_lunch,Transaction.Description) & transaction_type == 'expense', 'work_lunch',
-                                                                                ifelse(grepl(travel_expenses,Transaction.Description) & transaction_type == 'expense','travel_expenses',
-                                                                                       ifelse(grepl(travel_tickets,Transaction.Description) & transaction_type == 'expense', 'travel_tickets',
-                                                                                              ifelse(grepl(eating_out,Transaction.Description) & transaction_type == 'expense', 'eating_out',
-                                                                                                     ifelse(grepl(going_out,Transaction.Description) & transaction_type == 'expense', 'going_out',
-                                                                                                            ifelse(grepl(fashion,Transaction.Description) & transaction_type == 'expense', 'fashion',
-                                                                                                                   ifelse(grepl(sport,Transaction.Description) & transaction_type == 'expense', 'sport',
-                                                                                                                          ifelse(grepl(forniture,Transaction.Description) & transaction_type == 'expense', 'forniture',
-                                                                                                                                 ifelse(grepl(salary,Transaction.Description) & transaction_type == 'revenue', 'salary',
-                                                                                                                                        ifelse(grepl(interests_income,Transaction.Description) & transaction_type == 'revenue', 'interests_income',
-                                                                                                                                               ifelse(grepl(extra_income,Transaction.Description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
+    mutate(transaction_amount = ifelse(!is.na(debit.amount), -1 * debit.amount,credit.amount )) %>%
+    mutate(transaction_type = ifelse(!is.na(debit.amount), 'expense','revenue')) %>%
+    mutate(transaction.description = as.character(transaction.description))%>%
+    mutate(tag = ifelse(grepl(shelter,transaction.description) & transaction_type == 'expense', 'shelter',
+                        ifelse(grepl(nursery,transaction.description) & transaction_type == 'expense', 'nursery',
+                               ifelse(grepl(giving,transaction.description) & transaction_type == 'expense', 'giving',
+                                      ifelse(grepl(utilities,transaction.description) & transaction_type == 'expense', 'utilities',
+                                             ifelse(grepl(learning,transaction.description) & transaction_type == 'expense','learning',
+                                                    ifelse(grepl(media,transaction.description) & transaction_type == 'expense', 'media',
+                                                           ifelse(grepl(transport,transaction.description) & transaction_type == 'expense','transport',
+                                                                  ifelse(grepl(grocery,transaction.description) & transaction_type == 'expense','grocery',
+                                                                         ifelse(grepl(work_lunch,transaction.description) & transaction_type == 'expense', 'work_lunch',
+                                                                                ifelse(grepl(travel_expenses,transaction.description) & transaction_type == 'expense','travel_expenses',
+                                                                                       ifelse(grepl(travel_tickets,transaction.description) & transaction_type == 'expense', 'travel_tickets',
+                                                                                              ifelse(grepl(eating_out,transaction.description) & transaction_type == 'expense', 'eating_out',
+                                                                                                     ifelse(grepl(going_out,transaction.description) & transaction_type == 'expense', 'going_out',
+                                                                                                            ifelse(grepl(fashion,transaction.description) & transaction_type == 'expense', 'fashion',
+                                                                                                                   ifelse(grepl(sport,transaction.description) & transaction_type == 'expense', 'sport',
+                                                                                                                          ifelse(grepl(forniture,transaction.description) & transaction_type == 'expense', 'forniture',
+                                                                                                                                 ifelse(grepl(salary,transaction.description) & transaction_type == 'revenue', 'salary',
+                                                                                                                                        ifelse(grepl(interests_income,transaction.description) & transaction_type == 'revenue', 'interests_income',
+                                                                                                                                               ifelse(grepl(extra_income,transaction.description) & transaction_type == 'revenue', 'extra_income', 'uncategorised')
                                                                                                                                         )
                                                                                                                                  )
                                                                                                                           )
@@ -234,7 +240,7 @@ output$first_tab_plotly <- renderPlotly({
                         )
     )
     ) %>%
-    select(Transaction.Date, month, Transaction.Description, tag, transaction_type, transaction_amount)
+    select(transaction.date, month, transaction.description, tag, transaction_type, transaction_amount)
   
   
   
@@ -259,19 +265,19 @@ output$first_tab_plotly <- renderPlotly({
   # calculate Savings over time
   
   income_timeseries <- total_movements %>%
-    select(month, Transaction.Date, Debit.Amount,Credit.Amount, Transaction.Type, Transaction.Description ) %>%
-    mutate(Credit.Amount = replace(Credit.Amount,is.na(Credit.Amount),0))%>%
-    mutate(Debit.Amount = replace(Debit.Amount,is.na(Debit.Amount),0))%>%
+    select(month, transaction.date, debit.amount,credit.amount, transaction.type, transaction.description ) %>%
+    mutate(credit.amount = replace(credit.amount,is.na(credit.amount),0))%>%
+    mutate(debit.amount = replace(debit.amount,is.na(debit.amount),0))%>%
     group_by(month) %>%
-    summarise(Balance = sum(Credit.Amount - Debit.Amount))%>%
+    summarise(balance = sum(credit.amount - debit.amount))%>%
     bind_rows(initial_balance) %>%
     arrange(month)%>%
-    mutate(Balance = cumsum(Balance))%>%
-    select(month,Balance)
+    mutate(balance = cumsum(balance))%>%
+    select(month,balance)
   
   third_tab_plot <- reactive({
     # Plot Savings over time
-    ggplot(data = income_timeseries, aes(x = month, y = Balance, group = 1)) +
+    ggplot(data = income_timeseries, aes(x = month, y = balance, group = 1)) +
       geom_line(color = 'blue')+
       geom_area(fill = 'blue', alpha = .1)+
       theme(axis.text.x = element_text(angle = 45, hjust = 3),
