@@ -10,6 +10,7 @@ library(DT)
 
 # load files in classic account
 path_classic = "./statements/tsb_classic_enhance/"
+#path_classic = "/Users/giacomo.vannucchi/Projects/TSB_personal_finance/statements/tsb_classic_enhance/"
 temp_classic = list.files(path = path_classic, pattern="*.csv")
 
 classic_enhance_list = list()
@@ -27,6 +28,7 @@ rm(classic_enhance_list)
 
 # load files in classic plus
 path_plus = "./statements/tsb_classic_plus/"
+#path_plus = "/Users/giacomo.vannucchi/Projects/TSB_personal_finance/statements/tsb_classic_plus/"
 temp_plus = list.files(path = path_plus, pattern="*.csv")
 
 classic_plus_list = list()
@@ -45,11 +47,16 @@ rm(classic_plus_list)
 
 total_movements_raw <- rbind(classic_enhance, classic_plus)
 
-# Processing data ----
+# Processing/Cleaning TSB messy data ----
+
+ymd <- ymd(total_movements_raw$transaction.date) 
+dmy <- dmy(total_movements_raw$transaction.date)
+ymd[is.na(ymd)] <- dmy[is.na(ymd)]
+total_movements_raw$transaction.date <- ymd
 
 # adding month variable
 total_movements_raw <- total_movements_raw %>%
-  mutate(month = format(parse_date_time(total_movements_raw$transaction.date, "dmy"), "%Y-%m"))
+  mutate(month = format(parse_date_time(total_movements_raw$transaction.date, "ymd"), "%Y-%m"))
 
 # Save balance at beginning of analysis (to be used later in tab 3)
 initial_balance <- total_movements_raw %>%
@@ -156,9 +163,10 @@ server = shinyServer(function(input, output){
   )
   
 output$first_tab_plotly <- renderPlotly({
-  ggplotly(first_tab_plot()) %>% 
-    layout(autosize = F, width = 1200, height = 400,
-           margin = list(b = 160))
+  ggplotly(first_tab_plot()) 
+  # %>% 
+  #   layout(autosize = F, width = 1200, height = 400,
+  #          margin = list(b = 160))
   })
 
   # Tables
